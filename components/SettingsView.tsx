@@ -132,6 +132,7 @@ const ToggleItem: React.FC<{ title: string; subtitle: string; checked: boolean; 
 
 const SliderItem: React.FC<{ 
   title: string; 
+  subtitle?: string;
   value: number; 
   min: number; 
   max: number; 
@@ -139,9 +140,9 @@ const SliderItem: React.FC<{
   icon: any;
   previewText?: string;
   fontClass?: string;
-}> = ({ title, value, min, max, onChange, icon: Icon, previewText, fontClass }) => (
+}> = ({ title, subtitle, value, min, max, onChange, icon: Icon, previewText, fontClass }) => (
   <div className="p-3 sm:px-4">
-    <div className="flex items-center gap-3 mb-4">
+    <div className="flex items-center gap-3 mb-1">
       <div className="text-slate-400 dark:text-slate-500">
         <Icon size={20} />
       </div>
@@ -149,6 +150,10 @@ const SliderItem: React.FC<{
         <h4 className="text-[15px] font-semibold text-slate-800 dark:text-slate-200">{title}</h4>
       </div>
     </div>
+    
+    {subtitle && (
+      <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-snug mb-4 ml-10">{subtitle}</p>
+    )}
     
     <div className="flex items-center gap-4 py-2 px-2">
       <span className="text-xs font-medium text-slate-400">A</span>

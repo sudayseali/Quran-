@@ -18,7 +18,9 @@ import { AyahImageShare } from './components/AyahImageShare';
 import { BookmarksView } from './components/BookmarksView';
 import { ProfileView } from './components/ProfileView';
 import { SettingsView } from './components/SettingsView';
+import { GoToPageModal } from './components/GoToPageModal';
 import { useSettings } from './hooks/useSettings';
+import { MoreVertical, HelpCircle, Info, ExternalLink, Hash } from 'lucide-react';
 
 // Main Home Component
 const Home = ({ 
@@ -29,7 +31,8 @@ const Home = ({
   lastRead,
   onPlayGlobalAudio,
   chapters,
-  setChapters
+  setChapters,
+  onOpenGoToPage
 }: { 
   onNavigate: (ctx: NavigationContext) => void, 
   onOpenSidebar: () => void,
@@ -38,12 +41,14 @@ const Home = ({
   lastRead: any,
   onPlayGlobalAudio: (verseKey: string) => void,
   chapters: Chapter[],
-  setChapters: (chapters: Chapter[]) => void
+  setChapters: (chapters: Chapter[]) => void,
+  onOpenGoToPage: () => void
 }) => {
   const [loading, setLoading] = useState(chapters.length === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [listType, setListType] = useState<'surah' | 'hizb' | 'juz' | 'page'>('surah');
   const [shareVerse, setShareVerse] = useState<any>(null);
+  const [showTopMenu, setShowTopMenu] = useState(false);
 
   useEffect(() => {
     const loadChapters = async () => {
@@ -86,6 +91,50 @@ const Home = ({
               <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent tracking-tight">
                 Al Quran Pro
               </h1>
+          </div>
+
+          <div className="relative">
+            <button 
+              onClick={() => setShowTopMenu(!showTopMenu)}
+              className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+            >
+              <MoreVertical size={24} />
+            </button>
+
+            {showTopMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowTopMenu(false)} />
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in duration-200 py-1">
+                  <button 
+                    onClick={() => { onOpenGoToPage(); setShowTopMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                  >
+                    <Hash size={18} className="text-emerald-600" />
+                    <span>Go to page</span>
+                  </button>
+                  <button 
+                    onClick={() => { onNavigate({ type: 'settings' }); setShowTopMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                  >
+                    <Menu size={18} className="text-emerald-600" />
+                    <span>Settings</span>
+                  </button>
+                  <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                  <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <HelpCircle size={18} className="text-slate-400" />
+                    <span>Help</span>
+                  </button>
+                  <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <Info size={18} className="text-slate-400" />
+                    <span>About Us</span>
+                  </button>
+                  <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <ExternalLink size={18} className="text-slate-400" />
+                    <span>Other apps</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -330,6 +379,7 @@ const App = () => {
   const [audioProgress, setAudioProgress] = useState(0);
   const [selectedReciter, setSelectedReciter] = useState('Alafasy_128kbps');
   const [audioQueue, setAudioQueue] = useState<string[]>([]);
+  const [isGoToPageOpen, setIsGoToPageOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Cleanup audio on unmount
@@ -379,7 +429,12 @@ const App = () => {
       }
     });
 
-    newAudio.play();
+    const playPromise = newAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(error => {
+        console.error("Audio play interrupted or failed:", error);
+      });
+    }
     audioRef.current = newAudio;
     setPlayingVerse(verseKey);
     setIsPlaying(true);
@@ -409,7 +464,12 @@ const App = () => {
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
-        audioRef.current.play();
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error("Audio play interrupted:", error);
+          });
+        }
         setIsPlaying(true);
       }
     }
@@ -510,6 +570,7 @@ const App = () => {
             onPlayGlobalAudio={(vk) => playGlobalAudio(vk, false)}
             chapters={chapters}
             setChapters={setChapters}
+            onOpenGoToPage={() => setIsGoToPageOpen(true)}
           />
         )}
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -534,6 +595,12 @@ const App = () => {
               onClose={() => setLanguageModalOpen(false)}
               selectedId={selectedTranslationId}
               onSelect={handleTranslationSelect}
+            />
+
+            <GoToPageModal 
+              isOpen={isGoToPageOpen}
+              onClose={() => setIsGoToPageOpen(false)}
+              onGo={(page) => setNavigationContext({ type: 'page', id: page })}
             />
             
             {renderContent()}

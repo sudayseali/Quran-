@@ -303,33 +303,69 @@ export const DetailView: React.FC<DetailViewProps> = ({
     return acc;
   }, {} as Record<string, TafsirInfo[]>);
 
+  const MidSurahHeader = ({ verse }: { verse: Verse }) => {
+    const chapterId = verse.verse_key.split(':')[0];
+    return (
+      <div className="my-12 text-center animate-fade-in">
+        <div className="inline-flex items-center gap-4 mb-4">
+          <div className="h-px w-12 md:w-20 bg-emerald-200 dark:bg-emerald-800" />
+          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-[0.2em]">Surah Transition</span>
+          <div className="h-px w-12 md:w-20 bg-emerald-200 dark:bg-emerald-800" />
+        </div>
+        <div className="bg-emerald-950/5 dark:bg-emerald-500/5 rounded-3xl p-8 border border-emerald-100 dark:border-emerald-900/30 relative overflow-hidden group">
+           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.07] pointer-events-none group-hover:opacity-10 transition-opacity" 
+                style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/arabesque.png")' }} />
+           <h2 className="font-arabic text-4xl text-emerald-900 dark:text-emerald-100 relative z-10">سُورَةُ {verse.verse_key.split(':')[0]}</h2>
+           <p className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mt-4 relative z-10">Surah No. {chapterId}</p>
+        </div>
+        {verse.verse_key.split(':')[1] === '1' && chapterId !== '1' && chapterId !== '9' && (
+          <div className="font-arabic text-3xl mt-8 text-slate-800 dark:text-slate-200 opacity-90">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+        )}
+      </div>
+    );
+  };
+
   // Render Book Mode (Mushaf View)
-  const renderBookMode = () => (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-10 shadow-sm border border-slate-100 dark:border-slate-700 relative transition-colors">
-       {/* Background pattern */}
-       <div className="absolute inset-0 opacity-[0.02] dark:opacity-5 pointer-events-none" 
-            style={{ 
-              backgroundImage: 'radial-gradient(circle, #059669 1px, transparent 1px)', 
-              backgroundSize: '20px 20px' 
-            }} 
-       />
-       
-       <div 
-         dir="rtl" 
-         className="font-arabic text-slate-800 dark:text-slate-200 text-justify"
-         style={{ 
-           fontSize: `${fontSize}px`, 
-           lineHeight: '2.4' 
-         }}
-       >
-         {filteredVerses.map((verse) => {
-            const verseNum = verse.verse_key.split(':')[1];
-            const isPlayingVerse = globalAudio.playingVerse === verse.verse_key;
-            
-            return (
-               <React.Fragment key={verse.id}>
-                 <span 
-                   id={`verse-${verse.verse_key}`}
+  const renderBookMode = () => {
+    let lastChapter = '';
+    return (
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-10 shadow-sm border border-slate-100 dark:border-slate-700 relative transition-colors">
+         {/* Background pattern */}
+         <div className="absolute inset-0 opacity-[0.02] dark:opacity-5 pointer-events-none" 
+              style={{ 
+                backgroundImage: 'radial-gradient(circle, #059669 1px, transparent 1px)', 
+                backgroundSize: '20px 20px' 
+              }} 
+         />
+         
+         <div 
+           dir="rtl" 
+           className="font-arabic text-slate-800 dark:text-slate-200 text-justify"
+           style={{ 
+             fontSize: `${fontSize}px`, 
+             lineHeight: '2.4' 
+           }}
+         >
+           {filteredVerses.map((verse) => {
+              const chapterId = verse.verse_key.split(':')[0];
+              const verseNum = verse.verse_key.split(':')[1];
+              const isPlayingVerse = globalAudio.playingVerse === verse.verse_key;
+              
+              const showHeader = lastChapter && lastChapter !== chapterId;
+              lastChapter = chapterId;
+
+              return (
+                 <React.Fragment key={verse.id}>
+                   {showHeader && (
+                     <div className="w-full text-center my-10 py-6 border-y border-emerald-100/50 dark:border-emerald-900/30 font-arabic text-3xl text-emerald-800 dark:text-emerald-200" dir="rtl">
+                        سُورَةُ {chapterId}
+                        {verseNum === '1' && chapterId !== '1' && chapterId !== '9' && (
+                          <div className="text-2xl mt-4 opacity-80">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+                        )}
+                     </div>
+                   )}
+                   <span 
+                     id={`verse-${verse.verse_key}`}
                    onClick={() => {
                       toggleAudio(verse.verse_key); // Use toggleAudio here for single click interaction
                    }}
@@ -376,6 +412,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
        )}
     </div>
   );
+};
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-900 pb-24 animate-fade-in relative transition-colors">
