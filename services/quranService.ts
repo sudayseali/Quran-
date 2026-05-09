@@ -1,0 +1,188 @@
+import { ApiChapterResponse, ApiVerseResponse, ApiTafsirListResponse, TafsirContent, ApiTranslationResourceResponse } from '../types';
+
+const BASE_URL = 'https://api.quran.com/api/v4';
+const CACHE_PREFIX = 'quran_app_v2_';
+
+const getFromCache = <T>(key: string): T | null => {
+  try {
+    const cachedItem = localStorage.getItem(CACHE_PREFIX + key);
+    if (cachedItem) {
+      const { data } = JSON.parse(cachedItem);
+      return data;
+    }
+  } catch (error) {
+    console.error('Error reading from cache:', error);
+  }
+  return null;
+};
+
+const saveToCache = (key: string, data: any) => {
+  const itemToCache = {
+    data,
+    timestamp: Date.now(),
+  };
+  try {
+    // Basic LRU or cleanup could be added here, but for now we catch quota errors
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(itemToCache));
+  } catch (error) {
+    console.warn('Cache quota exceeded, clearing old items...');
+    try {
+        localStorage.clear();
+        localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(itemToCache));
+    } catch (e) {
+        console.error("Critical storage error", e);
+    }
+  }
+};
+
+export const fetchChapters = async (): Promise<ApiChapterResponse> => {
+  const cacheKey = 'chapters_list';
+  const cachedData = getFromCache<ApiChapterResponse>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(`${BASE_URL}/chapters?language=en`);
+    if (!response.ok) throw new Error('Failed to fetch chapters');
+    const data = await response.json();
+    saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchVerses = async (chapterId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
+  const perPage = 50; 
+  // Include translationId in cache key
+  const cacheKey = `verses_chapter_${chapterId}_page_${page}_tr_${translationId}_tajweed`;
+  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/verses/by_chapter/${chapterId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch verses');
+    const data = await response.json();
+    saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchVersesByHizb = async (hizbId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
+  const perPage = 50;
+  const cacheKey = `verses_hizb_${hizbId}_page_${page}_tr_${translationId}_tajweed`;
+  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/verses/by_hizb/${hizbId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch verses by hizb');
+    const data = await response.json();
+    saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchVersesByJuz = async (juzId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
+  const perPage = 50;
+  const cacheKey = `verses_juz_${juzId}_page_${page}_tr_${translationId}_tajweed`;
+  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/verses/by_juz/${juzId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch verses by juz');
+    const data = await response.json();
+    saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchVersesByPage = async (pageId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
+  // Quran pages are typically small enough to fetch in one go, but we support pagination just in case
+  const perPage = 50; 
+  const cacheKey = `verses_page_${pageId}_p_${page}_tr_${translationId}_tajweed`;
+  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/verses/by_page/${pageId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch verses by page');
+    const data = await response.json();
+    saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchTranslationResources = async (): Promise<ApiTranslationResourceResponse> => {
+  const cacheKey = 'translation_resources_list';
+  const cachedData = getFromCache<ApiTranslationResourceResponse>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(`${BASE_URL}/resources/translations?language=en`);
+    if (!response.ok) throw new Error('Failed to fetch translations list');
+    const data = await response.json();
+    saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchTafsirList = async (): Promise<ApiTafsirListResponse> => {
+  const cacheKey = 'tafsir_resources_list';
+  const cachedData = getFromCache<ApiTafsirListResponse>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(`${BASE_URL}/resources/tafsirs?language=en`);
+    if (!response.ok) throw new Error('Failed to fetch tafsirs');
+    const data = await response.json();
+    saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchTafsirContent = async (tafsirId: number, verseKey: string): Promise<TafsirContent> => {
+  const cacheKey = `tafsir_${tafsirId}_${verseKey}`;
+  const cachedData = getFromCache<TafsirContent>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(`${BASE_URL}/tafsirs/${tafsirId}/by_ayah/${verseKey}`);
+    if (!response.ok) throw new Error('Failed to fetch tafsir content');
+    const data = await response.json();
+    
+    // API returns { tafsir: { ... } }
+    const result = data.tafsir;
+    saveToCache(cacheKey, result);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAudioUrl = (verseKey: string, reciter: string = 'Alafasy_128kbps'): string => {
+  const [surah, verse] = verseKey.split(':');
+  const padSurah = surah.padStart(3, '0');
+  const padVerse = verse.padStart(3, '0');
+  return `https://everyayah.com/data/${reciter}/${padSurah}${padVerse}.mp3`;
+};
