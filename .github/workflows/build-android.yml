@@ -60,7 +60,7 @@ jobs:
           cd android
           gradle wrapper
           chmod +x gradlew
-          ./gradlew bundleRelease -Pandroid.injected.signing.storeFile=$(pwd)/app/keystore/upload-keystore.jks -Pandroid.injected.signing.storePassword=$STORE_PASSWORD -Pandroid.injected.signing.keyAlias=$KEY_ALIAS -Pandroid.injected.signing.keyPassword=$KEY_PASSWORD --no-daemon
+          ./gradlew clean bundleRelease -Pandroid.injected.signing.storeFile=$(pwd)/app/keystore/upload-keystore.jks -Pandroid.injected.signing.storePassword=$STORE_PASSWORD -Pandroid.injected.signing.keyAlias=$KEY_ALIAS -Pandroid.injected.signing.keyPassword=$KEY_PASSWORD --no-daemon
 
       - name: Upload Release Bundle
         uses: actions/upload-artifact@v4

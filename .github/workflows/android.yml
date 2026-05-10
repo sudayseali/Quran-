@@ -61,7 +61,7 @@ jobs:
           # Regenerate wrapper to ensure gradle-wrapper.jar is correct
           gradle wrapper
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace --no-daemon
+          ./gradlew clean assembleRelease --stacktrace --no-daemon
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
