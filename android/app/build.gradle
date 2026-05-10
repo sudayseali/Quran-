@@ -18,11 +18,11 @@ android {
     }
     signingConfigs {
         release {
-            if (project.hasProperty('KEY_ALIAS')) {
+            if (System.getenv("KEY_ALIAS") != null && !System.getenv("KEY_ALIAS").isEmpty()) {
                 storeFile file("keystore.jks")
-                storePassword KEYSTORE_PASSWORD
-                keyAlias KEY_ALIAS
-                keyPassword KEY_PASSWORD
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
             }
         }
     }
@@ -30,7 +30,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (project.hasProperty('KEY_ALIAS')) {
+            if (System.getenv("KEY_ALIAS") != null && !System.getenv("KEY_ALIAS").isEmpty()) {
                 signingConfig signingConfigs.release
             }
         }

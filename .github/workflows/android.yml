@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Ensure Android Platform
         run: |
@@ -42,11 +42,9 @@ jobs:
 
       - name: Setup Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > android/app/keystore.jks
-          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/local.properties
-          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/local.properties
-          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
-          echo "storeFile=keystore.jks" >> android/local.properties
+          if [ -n "${{ secrets.KEYSTORE_FILE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          fi
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -55,8 +53,13 @@ jobs:
 
       - name: Build Release APK
         working-directory: android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          gradle assembleRelease --stacktrace --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m" -Dkotlin.daemon.jvm.options="-Xmx1g"
+          chmod +x gradlew
+          ./gradlew assembleRelease --stacktrace
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
