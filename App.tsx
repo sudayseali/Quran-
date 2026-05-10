@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Search, Menu, Moon, Sun } from 'lucide-react';
 import { fetchChapters, getAudioUrl } from './services/quranService';
 import { AudioProvider } from './hooks/useAudio';
@@ -91,13 +92,24 @@ const Home = ({
               <button 
                 onClick={onOpenSidebar}
                 className="p-2 -ml-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                id="sidebar-toggle"
                 title="Menu"
               >
                   <Menu size={24} />
               </button>
-              <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent tracking-tight">
-                Al Quran Pro
-              </h1>
+              <div className="flex items-center gap-2">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="bg-emerald-600 p-1.5 rounded-lg shadow-sm"
+                  id="app-logo-container"
+                >
+                  <div className="w-5 h-5 border-2 border-white/80 rounded-sm" id="app-logo-inner"></div>
+                </motion.div>
+                <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent tracking-tight">
+                  Al Quran Pro
+                </h1>
+              </div>
           </div>
 
           <div className="relative">
