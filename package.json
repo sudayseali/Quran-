@@ -10,9 +10,9 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.3",
-    "@capacitor/cli": "^8.3.3",
-    "@capacitor/core": "^8.3.3",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
     "@types/dompurify": "^3.0.5",
     "@types/react-window": "^1.8.8",
     "dompurify": "^3.4.2",
