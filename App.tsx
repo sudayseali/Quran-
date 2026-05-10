@@ -98,15 +98,25 @@ const Home = ({
                   <Menu size={24} />
               </button>
               <div className="flex items-center gap-2">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="bg-emerald-600 p-1.5 rounded-lg shadow-sm"
-                  id="app-logo-container"
-                >
-                  <div className="w-5 h-5 border-2 border-white/80 rounded-sm" id="app-logo-inner"></div>
-                </motion.div>
-                <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent tracking-tight">
+                <div className="flex -space-x-1" id="animated-icons-container">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1], rotate: [0, 5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="bg-emerald-600 p-1 rounded-md shadow-sm z-10"
+                    id="icon-1"
+                  >
+                    <div className="w-4 h-4 border border-white/80 rounded-sm"></div>
+                  </motion.div>
+                  <motion.div
+                    animate={{ scale: [1.2, 1, 1.2], opacity: [0.7, 1, 0.7], rotate: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="bg-emerald-500 p-1 rounded-full shadow-sm z-0"
+                    id="icon-2"
+                  >
+                    <div className="w-4 h-4 border border-white/60 rounded-full"></div>
+                  </motion.div>
+                </div>
+                <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent tracking-tight ml-1">
                   Al Quran Pro
                 </h1>
               </div>
