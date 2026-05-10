@@ -22,6 +22,7 @@ import { SettingsView } from './components/SettingsView';
 import { GoToPageModal } from './components/GoToPageModal';
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { DownloadManager } from './components/DownloadManager';
+import { GlobalSearch } from './components/GlobalSearch';
 import { useSettings } from './hooks/useSettings';
 import { MoreVertical, HelpCircle, Info, ExternalLink, Hash } from 'lucide-react';
 
@@ -34,7 +35,8 @@ const Home = ({
   lastRead,
   chapters,
   setChapters,
-  onOpenGoToPage
+  onOpenGoToPage,
+  onOpenSearch
 }: { 
   onNavigate: (ctx: NavigationContext) => void, 
   onOpenSidebar: () => void,
@@ -43,7 +45,8 @@ const Home = ({
   lastRead: any,
   chapters: Chapter[],
   setChapters: (chapters: Chapter[]) => void,
-  onOpenGoToPage: () => void
+  onOpenGoToPage: () => void,
+  onOpenSearch: () => void
 }) => {
   const [loading, setLoading] = useState(chapters.length === 0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,6 +179,12 @@ const Home = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                <button 
+                  onClick={onOpenSearch}
+                  className="absolute right-3 top-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors border border-emerald-100 dark:border-emerald-800"
+                >
+                  Global Search
+                </button>
             </div>
           </div>
         )}
@@ -280,6 +289,7 @@ const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [isDownloaded, setIsDownloaded] = useState<boolean | null>(null);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   
   const { settings, updateSetting } = useSettings();
 
@@ -461,6 +471,7 @@ const App = () => {
             chapters={chapters}
             setChapters={setChapters}
             onOpenGoToPage={() => setIsGoToPageOpen(true)}
+            onOpenSearch={() => setIsGlobalSearchOpen(true)}
           />
         )}
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -482,6 +493,7 @@ const App = () => {
               onNavigate={setNavigationContext}
               onOpenLanguage={() => setLanguageModalOpen(true)}
               onOpenDownloads={() => setShowDownloadManager(true)}
+              onOpenSearch={() => setIsGlobalSearchOpen(true)}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
             />
@@ -501,6 +513,14 @@ const App = () => {
 
             {showDownloadManager && (
               <DownloadManager onClose={() => setShowDownloadManager(false)} />
+            )}
+
+            {isGlobalSearchOpen && (
+              <GlobalSearch 
+                isOpen={isGlobalSearchOpen} 
+                onClose={() => setIsGlobalSearchOpen(false)} 
+                onNavigate={setNavigationContext} 
+              />
             )}
             
             {renderContent()}

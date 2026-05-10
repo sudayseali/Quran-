@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Home, BookOpen, Settings, Globe, Share2, Heart, Compass, Clock, Calendar, Moon, Sun, Download } from 'lucide-react';
+import { X, Home, BookOpen, Settings, Globe, Share2, Heart, Compass, Clock, Calendar, Moon, Sun, Download, Search } from 'lucide-react';
 import { NavigationContext } from '../types';
 
 interface SidebarProps {
@@ -8,11 +8,12 @@ interface SidebarProps {
   onNavigate: (ctx: NavigationContext | null) => void;
   onOpenLanguage: () => void;
   onOpenDownloads: () => void;
+  onOpenSearch: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, onOpenLanguage, onOpenDownloads, isDarkMode, toggleDarkMode }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, onOpenLanguage, onOpenDownloads, onOpenSearch, isDarkMode, toggleDarkMode }) => {
   const handleNav = (ctx: NavigationContext | null) => {
     onNavigate(ctx);
     onClose();
@@ -47,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, o
           {/* Menu Items */}
           <div className="flex-1 space-y-2 overflow-y-auto">
             <SidebarItem icon={Home} label="Home" active onClick={() => handleNav(null)} />
+            <SidebarItem icon={Search} label="Global Search" onClick={() => { onOpenSearch(); onClose(); }} />
             <SidebarItem icon={Download} label="Offline Manager" onClick={() => { onOpenDownloads(); onClose(); }} />
             <SidebarItem icon={BookOpen} label="Reading History" onClick={onClose} />
             <SidebarItem icon={Globe} label="Language" onClick={handleLanguageClick} />

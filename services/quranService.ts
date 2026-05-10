@@ -257,6 +257,12 @@ export const fetchTafsirContent = async (tafsirId: number, verseKey: string): Pr
   }
 };
 
+export const searchQuran = async (query: string, page: number = 1): Promise<any> => {
+  const response = await fetch(`${BASE_URL}/search?q=${query}&page=${page}&size=20&language=en`);
+  if (!response.ok) throw new Error('Search failed');
+  return response.json();
+};
+
 export const getAudioUrl = (verseKey: string, reciter: string = 'Alafasy_128kbps'): string => {
   const [surah, verse] = verseKey.split(':');
   const padSurah = surah.padStart(3, '0');

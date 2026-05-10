@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, MoreHorizontal, Play, Pause, Share2, Bookmark, Search, X, Book, ChevronDown, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, Play, Pause, Share2, Bookmark, Search, X, Book, ChevronDown, Check, Loader2, Download } from 'lucide-react';
+import { audioDownloadService } from '../services/audioDownloadService';
 import { NavigationContext, Verse, TafsirInfo, ApiVerseResponse } from '../types';
 import { fetchVerses, fetchVersesByHizb, fetchVersesByJuz, fetchVersesByPage, getAudioUrl, fetchTafsirList, fetchTafsirContent } from '../services/quranService';
 import { Loading } from './Loading';
@@ -63,6 +64,35 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
   // Reading Progress State
   const [readingProgress, setReadingProgress] = useState(0);
+
+  const [downloading, setDownloading] = useState(false);
+  const [isDownloaded, setIsDownloaded] = useState(false);
+
+  useEffect(() => {
+    const checkDownloaded = async () => {
+      const id = getContextId();
+      if (context.type === 'surah' && id) {
+        const path = await audioDownloadService.getLocalPath(id, 'mishari_al-afasy');
+        setIsDownloaded(!!path);
+      }
+    };
+    checkDownloaded();
+  }, [context]);
+
+  const handleDownload = async () => {
+    const id = getContextId();
+    if (context.type === 'surah' && id) {
+      setDownloading(true);
+      try {
+        await audioDownloadService.downloadSurah(id, 'mishari_al-afasy');
+        setIsDownloaded(true);
+      } catch (err) {
+        console.error('Download failed', err);
+      } finally {
+        setDownloading(false);
+      }
+    }
+  };
 
   // View Settings
   const [showTools, setShowTools] = useState(false);
@@ -503,6 +533,27 @@ export const DetailView: React.FC<DetailViewProps> = ({
                           </>
                       )}
                   </button>
+
+                  {context.type === 'surah' && (
+                    <button 
+                      onClick={handleDownload}
+                      disabled={downloading || isDownloaded}
+                      className={`flex items-center justify-center backdrop-blur-md w-14 h-14 rounded-2xl transition-all shadow-lg border ${
+                        isDownloaded 
+                          ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400' 
+                          : 'bg-black/20 border-white/10 text-emerald-100/70 hover:bg-black/30'
+                      }`}
+                      title={isDownloaded ? "Downloaded" : "Download for offline"}
+                    >
+                        {downloading ? (
+                          <Loader2 size={24} className="animate-spin" />
+                        ) : isDownloaded ? (
+                          <Check size={24} />
+                        ) : (
+                          <Download size={24} />
+                        )}
+                    </button>
+                  )}
                   
                   {/* Tajweed Toggle */}
                   <button 
