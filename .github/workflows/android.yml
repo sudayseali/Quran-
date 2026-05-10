@@ -56,8 +56,7 @@ jobs:
       - name: Build Release APK
         working-directory: android
         run: |
-          gradle wrapper
-          ./gradlew assembleRelease --stacktrace --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m" -Dkotlin.daemon.jvm.options="-Xmx1g"
+          gradle assembleRelease --stacktrace --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m" -Dkotlin.daemon.jvm.options="-Xmx1g"
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
