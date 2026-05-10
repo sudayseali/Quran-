@@ -1,0 +1,166 @@
+import { Howl } from 'howler';
+import { Chapter } from '../types';
+import { audioDownloadService } from './audioDownloadService';
+
+export interface AudioState {
+  isPlaying: boolean;
+  currentSurah: Chapter | null;
+  currentTime: number;
+  duration: number;
+  playbackSpeed: number;
+  queue: Chapter[];
+  currentIndex: number;
+  isBuffering: boolean;
+}
+
+class AudioService {
+  private howl: Howl | null = null;
+  private onStateChange: (state: Partial<AudioState>) => void = () => {};
+  private currentSurah: Chapter | null = null;
+  private queue: Chapter[] = [];
+  private currentIndex: number = -1;
+  private playbackSpeed: number = 1;
+
+  constructor() {
+    this.setupMediaSession();
+  }
+
+  private setupMediaSession() {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => this.play());
+      navigator.mediaSession.setActionHandler('pause', () => this.pause());
+      navigator.mediaSession.setActionHandler('previoustrack', () => this.playPrevious());
+      navigator.mediaSession.setActionHandler('nexttrack', () => this.playNext());
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const skipTime = details.seekOffset || 10;
+        this.seek(Math.max(0, (this.howl?.seek() as number || 0) - skipTime));
+      });
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const skipTime = details.seekOffset || 10;
+        this.seek(Math.min(this.howl?.duration() || 0, (this.howl?.seek() as number || 0) + skipTime));
+      });
+      
+      // Update position state for better lock screen progress
+      setInterval(() => {
+        if (this.howl && this.howl.playing()) {
+          navigator.mediaSession.setPositionState({
+            duration: this.howl.duration(),
+            playbackRate: this.playbackSpeed,
+            position: this.howl.seek() as number,
+          });
+        }
+      }, 1000);
+    }
+  }
+
+  private updateMetadata() {
+    if ('mediaSession' in navigator && this.currentSurah) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: this.currentSurah.name_simple,
+        artist: 'Sheikh Mishary Rashid Alafasy',
+        album: 'The Holy Quran',
+        artwork: [
+          { src: 'https://api.quran.com/favicon.ico', sizes: '96x96', type: 'image/png' },
+          { src: 'https://api.quran.com/favicon.ico', sizes: '512x512', type: 'image/png' },
+        ],
+      });
+    }
+  }
+
+  setStateCallback(callback: (state: Partial<AudioState>) => void) {
+    this.onStateChange = callback;
+  }
+
+  async playSurah(surah: Chapter, playlist: Chapter[] = []) {
+    if (this.howl) {
+      this.howl.unload();
+    }
+
+    this.currentSurah = surah;
+    this.queue = playlist.length > 0 ? playlist : [surah];
+    this.currentIndex = this.queue.findIndex(s => s.id === surah.id);
+    
+    // Check for offline version first
+    const reciterId = 'mishari_al-afasy';
+    const localPath = await audioDownloadService.getLocalPath(surah.id, reciterId);
+    
+    let url;
+    if (localPath) {
+        url = localPath;
+        console.log('Playing from local storage:', localPath);
+    } else {
+        const padId = surah.id.toString().padStart(3, '0');
+        url = `https://download.quranicaudio.com/quran/${reciterId}/${padId}.mp3`;
+        console.log('Streaming from web:', url);
+    }
+    
+    this.onStateChange({ isBuffering: true, currentSurah: surah, queue: this.queue, currentIndex: this.currentIndex });
+
+    this.howl = new Howl({
+      src: [url],
+      html5: true, // Crucial for background audio and larger files
+      rate: this.playbackSpeed,
+      onplay: () => {
+        this.onStateChange({ isPlaying: true, isBuffering: false, duration: this.howl?.duration() });
+        this.updateMetadata();
+      },
+      onpause: () => this.onStateChange({ isPlaying: false }),
+      onstop: () => this.onStateChange({ isPlaying: false }),
+      onend: () => this.playNext(),
+      onload: () => this.onStateChange({ duration: this.howl?.duration() }),
+      onseek: () => this.onStateChange({ currentTime: this.howl?.seek() as number }),
+      onloaderror: (id, err) => {
+        console.error('Howl load error:', err);
+        this.onStateChange({ isBuffering: false });
+      }
+    });
+
+    this.howl.play();
+
+    // Start timer for progress update
+    const updateProgress = () => {
+      if (this.howl && this.howl.playing()) {
+        this.onStateChange({ currentTime: this.howl.seek() as number });
+        requestAnimationFrame(updateProgress);
+      }
+    };
+    updateProgress();
+  }
+
+  play() {
+    this.howl?.play();
+  }
+
+  pause() {
+    this.howl?.pause();
+  }
+
+  seek(time: number) {
+    if (this.howl) {
+      this.howl.seek(time);
+      this.onStateChange({ currentTime: time });
+    }
+  }
+
+  setSpeed(speed: number) {
+    this.playbackSpeed = speed;
+    if (this.howl) {
+      this.howl.rate(speed);
+    }
+    this.onStateChange({ playbackSpeed: speed });
+  }
+
+  playNext() {
+    if (this.currentIndex < this.queue.length - 1) {
+      this.playSurah(this.queue[this.currentIndex + 1], this.queue);
+    }
+  }
+
+  playPrevious() {
+    if (this.currentIndex > 0) {
+      this.playSurah(this.queue[this.currentIndex - 1], this.queue);
+    }
+  }
+}
+
+export const audioService = new AudioService();

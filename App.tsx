@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter } from 'react-router-dom';
 import { Search, Menu, Moon, Sun } from 'lucide-react';
 import { fetchChapters, getAudioUrl } from './services/quranService';
+import { AudioProvider } from './hooks/useAudio';
+import { AudioPlayer } from './components/AudioPlayer';
 import { Chapter, NavigationContext } from './types';
 import { ChapterRow } from './components/ChapterRow';
 import { LastRead } from './components/LastRead';
@@ -10,7 +12,6 @@ import { DetailView } from './components/DetailView';
 import { Loading } from './components/Loading';
 import { Sidebar } from './components/Sidebar';
 import { LanguageSelector } from './components/LanguageSelector';
-import { GlobalAudioPlayer } from './components/GlobalAudioPlayer';
 import { ReadingTracker } from './components/ReadingTracker';
 import { DailyAyah } from './components/DailyAyah';
 import { MoodQuran } from './components/MoodQuran';
@@ -31,7 +32,6 @@ const Home = ({
   versesReadToday, 
   dailyGoal,
   lastRead,
-  onPlayGlobalAudio,
   chapters,
   setChapters,
   onOpenGoToPage
@@ -41,7 +41,6 @@ const Home = ({
   versesReadToday: number,
   dailyGoal: number,
   lastRead: any,
-  onPlayGlobalAudio: (verseKey: string) => void,
   chapters: Chapter[],
   setChapters: (chapters: Chapter[]) => void,
   onOpenGoToPage: () => void
@@ -143,7 +142,6 @@ const Home = ({
         <DailyAyah 
           onNavigate={onNavigate} 
           onShare={setShareVerse} 
-          onPlay={onPlayGlobalAudio} 
         />
 
         <MoodQuran onShare={setShareVerse} onNavigate={onNavigate} />
@@ -384,117 +382,8 @@ const App = () => {
     localStorage.setItem('quran_last_read', JSON.stringify(data));
   };
 
-  // Global Audio State
-  const [playingVerse, setPlayingVerse] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(0);
-  const [selectedReciter, setSelectedReciter] = useState('Alafasy_128kbps');
-  const [audioQueue, setAudioQueue] = useState<string[]>([]);
+  // Global Audio State (Legacy removed, using AudioProvider)
   const [isGoToPageOpen, setIsGoToPageOpen] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Cleanup audio on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    };
-  }, []);
-
-  const playGlobalAudio = (verseKey: string, continuous: boolean = false, queue: string[] = [], onEndedCallback?: () => void) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setAudioProgress(0);
-    }
-
-    if (queue.length > 0) {
-      setAudioQueue(queue);
-    }
-
-    const url = getAudioUrl(verseKey, selectedReciter);
-    const newAudio = new Audio(url);
-
-    newAudio.addEventListener('timeupdate', () => {
-      if (newAudio.duration) {
-        setAudioProgress((newAudio.currentTime / newAudio.duration) * 100);
-      }
-    });
-
-    newAudio.addEventListener('ended', () => {
-      if (onEndedCallback) {
-        onEndedCallback();
-      } else if (continuous && queue.length > 0) {
-        const currentIndex = queue.indexOf(verseKey);
-        if (currentIndex !== -1 && currentIndex < queue.length - 1) {
-          playGlobalAudio(queue[currentIndex + 1], true, queue);
-        } else {
-          setIsPlaying(false);
-          setPlayingVerse(null);
-          setAudioProgress(0);
-        }
-      } else {
-        setIsPlaying(false);
-        setPlayingVerse(null);
-        setAudioProgress(0);
-      }
-    });
-
-    const playPromise = newAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        console.error("Audio play interrupted or failed:", error);
-      });
-    }
-    audioRef.current = newAudio;
-    setPlayingVerse(verseKey);
-    setIsPlaying(true);
-  };
-
-  const playNext = () => {
-    if (playingVerse && audioQueue.length > 0) {
-      const idx = audioQueue.indexOf(playingVerse);
-      if (idx !== -1 && idx < audioQueue.length - 1) {
-        playGlobalAudio(audioQueue[idx + 1], true, audioQueue);
-      }
-    }
-  };
-
-  const playPrev = () => {
-    if (playingVerse && audioQueue.length > 0) {
-      const idx = audioQueue.indexOf(playingVerse);
-      if (idx > 0) {
-        playGlobalAudio(audioQueue[idx - 1], true, audioQueue);
-      }
-    }
-  };
-
-  const toggleGlobalAudio = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.error("Audio play interrupted:", error);
-          });
-        }
-        setIsPlaying(true);
-      }
-    }
-  };
-
-  const closeGlobalAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    setIsPlaying(false);
-    setPlayingVerse(null);
-    setAudioProgress(0);
-    setAudioQueue([]);
-  };
   
   // Translation State
   // Default to 131 (Sahih International - English)
@@ -531,16 +420,6 @@ const App = () => {
           bookmarks={bookmarks}
           toggleBookmark={toggleBookmark}
           onVerseRead={incrementVersesRead}
-          globalAudio={{
-            playingVerse,
-            isPlaying,
-            audioProgress,
-            selectedReciter,
-            setSelectedReciter,
-            playGlobalAudio,
-            toggleGlobalAudio,
-            closeGlobalAudio
-          }}
           saveLastRead={saveLastRead}
         />
       );
@@ -579,7 +458,6 @@ const App = () => {
             versesReadToday={versesReadToday}
             dailyGoal={dailyGoal}
             lastRead={lastRead}
-            onPlayGlobalAudio={(vk) => playGlobalAudio(vk, false)}
             chapters={chapters}
             setChapters={setChapters}
             onOpenGoToPage={() => setIsGoToPageOpen(true)}
@@ -591,7 +469,8 @@ const App = () => {
   };
 
   return (
-    <HashRouter>
+    <AudioProvider>
+      <HashRouter>
         <div className="w-full bg-slate-50 dark:bg-slate-900 min-h-screen relative transition-colors">
             {isDownloaded === false && (
               <OnboardingScreen onComplete={() => setIsDownloaded(true)} />
@@ -626,17 +505,10 @@ const App = () => {
             
             {renderContent()}
 
-            <GlobalAudioPlayer 
-              playingVerse={playingVerse}
-              isPlaying={isPlaying}
-              audioProgress={audioProgress}
-              onTogglePlay={toggleGlobalAudio}
-              onNext={audioQueue.length > 0 ? playNext : undefined}
-              onPrev={audioQueue.length > 0 ? playPrev : undefined}
-              onClose={closeGlobalAudio}
-            />
+            <AudioPlayer />
         </div>
-    </HashRouter>
+      </HashRouter>
+    </AudioProvider>
   );
 };
 

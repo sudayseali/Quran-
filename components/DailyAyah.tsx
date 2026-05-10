@@ -2,18 +2,31 @@ import React, { useState } from 'react';
 import { ArrowRight, Share2, Play } from 'lucide-react';
 import { NavigationContext } from '../types';
 
+import { useAudio } from '../hooks/useAudio';
+
 interface DailyAyahProps {
   onNavigate: (ctx: NavigationContext) => void;
   onShare: (ayah: any) => void;
-  onPlay: (verseKey: string) => void;
 }
 
-export const DailyAyah: React.FC<DailyAyahProps> = ({ onNavigate, onShare, onPlay }) => {
+export const DailyAyah: React.FC<DailyAyahProps> = ({ onNavigate, onShare }) => {
+  const { playSurah } = useAudio();
   // Hardcoded beautiful ayah for demo (Ayatul Kursi or similar)
   const dailyAyah = {
     verse_key: "2:255",
     text_uthmani: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ...",
     translation: "Allah - there is no deity except Him, the Ever-Living, the Sustainer of [all] existence..."
+  };
+
+  const handlePlay = () => {
+    // Al-Baqarah is ID 2
+    playSurah({ 
+      id: 2, 
+      name_simple: "Al-Baqarah", 
+      name_arabic: "البقرة",
+      revelation_place: "madinah",
+      verses_count: 286
+    } as any);
   };
 
   return (
@@ -49,7 +62,7 @@ export const DailyAyah: React.FC<DailyAyahProps> = ({ onNavigate, onShare, onPla
 
           <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-6">
              <div className="flex items-center gap-3">
-                <button onClick={() => onPlay(dailyAyah.verse_key)} className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-400 flex items-center justify-center text-slate-900 transition-colors shadow-lg shadow-amber-500/20">
+                <button onClick={handlePlay} className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-400 flex items-center justify-center text-slate-900 transition-colors shadow-lg shadow-amber-500/20">
                   <Play size={16} className="ml-1" />
                 </button>
                 <div className="text-sm font-medium text-amber-100">

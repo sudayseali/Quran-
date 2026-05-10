@@ -7,6 +7,7 @@ export interface AppSettings {
   ayahTextSize: number;
   translationTextSize: number;
   ayahBeforeTranslation: boolean;
+  selectedReciter: string;
 }
 
 const defaultSettings: AppSettings = {
@@ -16,6 +17,7 @@ const defaultSettings: AppSettings = {
   ayahTextSize: 24,
   translationTextSize: 16,
   ayahBeforeTranslation: true,
+  selectedReciter: 'mishari_al-afasy'
 };
 
 export const useSettings = () => {

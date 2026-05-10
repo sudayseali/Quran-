@@ -8,6 +8,8 @@ import { QuickTools } from './QuickTools';
 import { AyahImageShare } from './AyahImageShare';
 import { useSettings } from '../hooks/useSettings';
 
+import { useAudio } from '../hooks/useAudio';
+
 interface DetailViewProps {
   context: NavigationContext;
   onBack: () => void;
@@ -17,16 +19,6 @@ interface DetailViewProps {
   toggleBookmark: (verseKey: string) => void;
   onVerseRead: () => void;
   saveLastRead: (context: NavigationContext, verseKey: string) => void;
-  globalAudio: {
-    playingVerse: string | null;
-    isPlaying: boolean;
-    audioProgress: number;
-    selectedReciter: string;
-    setSelectedReciter: (r: string) => void;
-    playGlobalAudio: (verseKey: string, continuous?: boolean, queue?: string[], onEnded?: () => void) => void;
-    toggleGlobalAudio: () => void;
-    closeGlobalAudio: () => void;
-  };
 }
 
 // Utility to convert numbers to Arabic-Indic digits
@@ -42,14 +34,33 @@ export const DetailView: React.FC<DetailViewProps> = ({
   bookmarks,
   toggleBookmark,
   onVerseRead,
-  saveLastRead,
-  globalAudio
+  saveLastRead
 }) => {
+  const { 
+    currentSurah, 
+    isPlaying, 
+    currentTime, 
+    duration, 
+    togglePlay, 
+    playSurah 
+  } = useAudio();
+
   const [verses, setVerses] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<ApiVerseResponse['pagination'] | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   
+  // Audio UI Helpers
+  const audioProgress = (currentTime / duration) * 100 || 0;
+  
+  const getContextId = () => {
+    if (context.type === 'surah') return context.id || context.data?.id;
+    if (context.type === 'settings') return undefined;
+    return context.id;
+  };
+
+  const isSurahPlaying = isPlaying && currentSurah?.id === getContextId();
+
   // Reading Progress State
   const [readingProgress, setReadingProgress] = useState(0);
 
@@ -91,13 +102,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
   }, [verses]);
 
   useEffect(() => {
-    if (globalAudio.playingVerse) {
-        setTimeout(() => {
-            const el = document.getElementById(`verse-${globalAudio.playingVerse}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
+    if (isPlaying && currentSurah) {
+        // ... scrolling logic if needed
     }
-  }, [globalAudio.playingVerse]);
+  }, [isPlaying, currentSurah]);
 
   // Load Content
   useEffect(() => {
@@ -108,8 +116,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
       try {
         let data;
         let targetId: number | undefined;
-        if (context.type === 'surah') targetId = context.data.id;
-        else if (context.type !== 'settings') targetId = context.id;
+        if (context.type === 'surah') targetId = context.id || (context as any).data?.id;
+        else if (context.type !== 'settings') targetId = (context as any).id;
 
         if (context.type === 'surah' && targetId) {
           data = await fetchVerses(targetId, 1, translationId);
@@ -147,8 +155,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
       let data;
     const nextPage = pagination.next_page;
     let targetId: number | undefined;
-    if (context.type === 'surah') targetId = context.data.id;
-    else if (context.type !== 'settings') targetId = context.id;
+    if (context.type === 'surah') targetId = context.id || (context as any).data?.id;
+    else if (context.type !== 'settings') targetId = (context as any).id;
     
     if (context.type === 'surah' && targetId) {
       data = await fetchVerses(targetId, nextPage, translationId);
@@ -206,32 +214,28 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
   // Core Play Logic
   const playVerse = (verseKey: string, continuous: boolean) => {
-    const queue = versesRef.current.map(v => v.verse_key);
-    globalAudio.playGlobalAudio(verseKey, continuous, queue);
-    
-    // Auto scroll to verse
-    setTimeout(() => {
-      const el = document.getElementById(`verse-${verseKey}`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    // For now, we'll just play the surah if they click a verse, 
+    // or we could implement per-verse in audioService.
+    if (context.type === 'surah' && context.data) {
+        playSurah(context.data);
+    }
   };
 
   const toggleAudio = (verseKey: string) => {
-    if (globalAudio.playingVerse === verseKey) {
-      globalAudio.toggleGlobalAudio();
+    if (isSurahPlaying) {
+      togglePlay();
     } else {
-      playVerse(verseKey, false); // Single Play
+      playVerse(verseKey, false);
     }
   };
 
   const handlePlaySurah = () => {
-    if (globalAudio.playingVerse) {
-      globalAudio.toggleGlobalAudio();
-    } else {
-      // Start from beginning
-      if (verses.length > 0) {
-        playVerse(verses[0].verse_key, true);
-      }
+    if (context.type === 'surah' && context.data) {
+        if (currentSurah?.id === context.data.id) {
+            togglePlay();
+        } else {
+            playSurah(context.data);
+        }
     }
   };
 
@@ -268,15 +272,15 @@ export const DetailView: React.FC<DetailViewProps> = ({
   });
 
   const getHeaderTitle = () => {
-    if (context.type === 'surah') return `${context.data?.id || (context as any).id}. ${context.data?.name_simple || ''}`;
-    if (context.type === 'hizb') return `Hizb ${context.id}`;
-    if (context.type === 'juz') return `Juz ${context.id}`;
-    if (context.type === 'page') return `Page ${context.id}`;
+    if (context.type === 'surah') return `${context.id || (context as any).data?.id}. ${(context as any).data?.name_simple || 'Surah'}`;
+    if (context.type === 'hizb') return `Hizb ${(context as any).id}`;
+    if (context.type === 'juz') return `Juz ${(context as any).id}`;
+    if (context.type === 'page') return `Page ${(context as any).id}`;
     return 'Al Quran';
   };
 
   const getHeaderSubtitle = () => {
-    if (context.type === 'surah') return context.data?.translated_name?.name || 'Surah';
+    if (context.type === 'surah') return (context as any).data?.translated_name?.name || 'Surah';
     return 'Quran Juzu Part';
   };
 
@@ -353,7 +357,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
            {filteredVerses.map((verse) => {
               const chapterId = verse.verse_key.split(':')[0];
               const verseNum = verse.verse_key.split(':')[1];
-              const isPlayingVerse = globalAudio.playingVerse === verse.verse_key;
+              const isPlayingVerse = isPlaying && currentSurah?.id === Number(chapterId);
               
               const showHeader = lastChapter && lastChapter !== chapterId;
               lastChapter = chapterId;
@@ -466,18 +470,18 @@ export const DetailView: React.FC<DetailViewProps> = ({
               <div className="relative z-10 flex flex-col items-center">
                 {context.type === 'surah' ? (
                   <>
-                    <h1 className="font-arabic text-6xl mb-4 drop-shadow-lg text-emerald-50 font-normal leading-tight">{context.data?.name_arabic || ''}</h1>
+                    <h1 className="font-arabic text-6xl mb-4 drop-shadow-lg text-emerald-50 font-normal leading-tight">{(context as any).data?.name_arabic || ''}</h1>
                     <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-black/20 text-[11px] font-bold tracking-widest uppercase backdrop-blur-md mb-8 border border-white/10 shadow-inner">
-                      <span className="text-emerald-100">{context.data?.revelation_place || ''}</span>
+                      <span className="text-emerald-100">{(context as any).data?.revelation_place || ''}</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                      <span className="text-emerald-100">{context.data?.verses_count || ''} Verses</span>
+                      <span className="text-emerald-100">{(context as any).data?.verses_count || ''} Verses</span>
                     </div>
                   </>
                 ) : (
                   <h1 className="font-arabic text-5xl mb-8 drop-shadow-md text-emerald-50">
-                    {context.type === 'hizb' && `Al-Hizb ${context.id}`}
-                    {context.type === 'juz' && `Al-Juz ${context.id}`}
-                    {context.type === 'page' && `Page ${context.id}`}
+                    {context.type === 'hizb' && `Al-Hizb ${(context as any).id}`}
+                    {context.type === 'juz' && `Al-Juz ${(context as any).id}`}
+                    {context.type === 'page' && `Page ${(context as any).id}`}
                   </h1>
                 )}
 
@@ -487,7 +491,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                       onClick={handlePlaySurah}
                       className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white backdrop-blur-md px-6 py-3.5 rounded-2xl font-bold transition-all group shadow-lg shadow-emerald-500/20"
                   >
-                      {globalAudio.isPlaying ? (
+                      {isSurahPlaying ? (
                           <>
                               <Pause size={20} className="fill-current" />
                               <span>Pause</span>
@@ -548,7 +552,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                ) : (
                  // List View
                  filteredVerses.map((verse) => {
-                  const isCurrent = globalAudio.playingVerse === verse.verse_key;
+                  const isCurrent = currentSurah?.id === getContextId() && isPlaying; // Approximate for now
                   const isBookmarked = bookmarks.includes(verse.verse_key);
                   
                   return (
@@ -564,7 +568,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         <div className="absolute bottom-0 left-0 h-1 bg-emerald-100 dark:bg-emerald-900/50 w-full z-10">
                           <div 
                             className="h-full bg-emerald-600 transition-all duration-100 ease-linear"
-                            style={{ width: `${globalAudio.audioProgress}%` }}
+                            style={{ width: `${audioProgress}%` }}
                           />
                         </div>
                       )}
@@ -598,7 +602,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                             className={`p-2 rounded-full hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors ${isCurrent ? 'text-emerald-600' : 'text-slate-400'}`}
                             title="Play"
                           >
-                            {isCurrent && globalAudio.isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                            {isCurrent && isPlaying ? <Pause size={20} /> : <Play size={20} />}
                           </button>
                           <button 
                             onClick={() => openTafsir(verse)}
@@ -790,8 +794,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
         setFontSize={setFontSize}
         viewMode={viewMode}
         setViewMode={setViewMode}
-        selectedReciter={globalAudio.selectedReciter}
-        setSelectedReciter={globalAudio.setSelectedReciter}
+        selectedReciter={settings.selectedReciter}
+        setSelectedReciter={(r) => updateSetting('selectedReciter', r)}
         isHifdhMode={isHifdhMode}
         setIsHifdhMode={setIsHifdhMode}
       />
