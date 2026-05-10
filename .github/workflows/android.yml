@@ -40,37 +40,25 @@ jobs:
             npx cap sync android
           fi
 
-      # To use this for release builds, add your keystore base64 string, store password, key alias, and key password 
-      # to your GitHub Repository Secrets and uncomment the following block.
-      #
-      # - name: Setup Keystore
-      #   run: |
-      #     echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > android/app/keystore.jks
-      #     echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/local.properties
-      #     echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/local.properties
-      #     echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
-      #     echo "storeFile=keystore.jks" >> android/local.properties
+      - name: Setup Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/local.properties
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/local.properties
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
+          echo "storeFile=keystore.jks" >> android/local.properties
 
-      - name: Build Debug APK
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Release APK
         working-directory: android
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
-          
-      # Uncomment to build Release APK if keystore is configured
-      # - name: Build Release APK
-      #   working-directory: android
-      #   run: |
-      #     ./gradlew assembleRelease --stacktrace
+          gradle wrapper
+          ./gradlew assembleRelease --stacktrace
 
-      - name: Upload Debug APK
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      # - name: Upload Release APK
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: app-release
-      #     path: android/app/build/outputs/apk/release/app-release.apk
+          name: app-release
+          path: android/app/build/outputs/apk/release/*.apk
