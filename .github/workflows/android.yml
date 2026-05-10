@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: '17'
 
       - name: Ensure Android Platform
         run: |
@@ -54,8 +54,8 @@ jobs:
       - name: Build Release APK
         working-directory: android
         run: |
-          gradle wrapper
-          ./gradlew assembleRelease --stacktrace
+          chmod +x gradlew
+          ./gradlew assembleRelease --stacktrace || gradle assembleRelease --stacktrace
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
