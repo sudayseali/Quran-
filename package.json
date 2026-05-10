@@ -13,11 +13,17 @@
     "@capacitor/android": "^8.3.3",
     "@capacitor/cli": "^8.3.3",
     "@capacitor/core": "^8.3.3",
+    "@types/dompurify": "^3.0.5",
+    "@types/react-window": "^1.8.8",
+    "dompurify": "^3.4.2",
     "html2canvas": "^1.4.1",
+    "idb": "^8.0.3",
+    "idb-keyval": "^6.2.2",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.0"
+    "react-router-dom": "^7.13.0",
+    "react-window": "^2.2.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

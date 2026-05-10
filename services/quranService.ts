@@ -1,50 +1,62 @@
 import { ApiChapterResponse, ApiVerseResponse, ApiTafsirListResponse, TafsirContent, ApiTranslationResourceResponse } from '../types';
+import { openDB, IDBPDatabase } from 'idb';
+import DOMPurify from 'dompurify';
 
 const BASE_URL = 'https://api.quran.com/api/v4';
-const CACHE_PREFIX = 'quran_app_v2_';
+const DB_NAME = 'QuranAppDB';
+const STORE_NAME = 'api_cache';
 
-const getFromCache = <T>(key: string): T | null => {
+let dbPromise: Promise<IDBPDatabase> | null = null;
+
+const getDB = () => {
+  if (!dbPromise) {
+    dbPromise = openDB(DB_NAME, 1, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
+        }
+      },
+    });
+  }
+  return dbPromise;
+};
+
+const getFromCache = async <T>(key: string): Promise<T | null> => {
   try {
-    const cachedItem = localStorage.getItem(CACHE_PREFIX + key);
+    const db = await getDB();
+    const cachedItem = await db.get(STORE_NAME, key);
     if (cachedItem) {
-      const { data } = JSON.parse(cachedItem);
-      return data;
+      return cachedItem.data;
     }
   } catch (error) {
-    console.error('Error reading from cache:', error);
+    console.error('Error reading from IndexedDB:', error);
   }
   return null;
 };
 
-const saveToCache = (key: string, data: any) => {
-  const itemToCache = {
-    data,
-    timestamp: Date.now(),
-  };
+const saveToCache = async (key: string, data: any) => {
   try {
-    // Basic LRU or cleanup could be added here, but for now we catch quota errors
-    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(itemToCache));
+    const db = await getDB();
+    await db.put(STORE_NAME, { data, timestamp: Date.now() }, key);
   } catch (error) {
-    console.warn('Cache quota exceeded, clearing old items...');
-    try {
-        localStorage.clear();
-        localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(itemToCache));
-    } catch (e) {
-        console.error("Critical storage error", e);
-    }
+    console.error('Error saving to IndexedDB:', error);
   }
+};
+
+export const sanitizeHtml = (html: string): string => {
+  return DOMPurify.sanitize(html);
 };
 
 export const fetchChapters = async (): Promise<ApiChapterResponse> => {
   const cacheKey = 'chapters_list';
-  const cachedData = getFromCache<ApiChapterResponse>(cacheKey);
+  const cachedData = await getFromCache<ApiChapterResponse>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
     const response = await fetch(`${BASE_URL}/chapters?language=en`);
     if (!response.ok) throw new Error('Failed to fetch chapters');
     const data = await response.json();
-    saveToCache(cacheKey, data);
+    await saveToCache(cacheKey, data);
     return data;
   } catch (error) {
     throw error;
@@ -53,9 +65,8 @@ export const fetchChapters = async (): Promise<ApiChapterResponse> => {
 
 export const fetchVerses = async (chapterId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
   const perPage = 50; 
-  // Include translationId in cache key
   const cacheKey = `verses_chapter_${chapterId}_page_${page}_tr_${translationId}_tajweed`;
-  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  const cachedData = await getFromCache<ApiVerseResponse>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
@@ -64,7 +75,7 @@ export const fetchVerses = async (chapterId: number, page: number = 1, translati
     );
     if (!response.ok) throw new Error('Failed to fetch verses');
     const data = await response.json();
-    saveToCache(cacheKey, data);
+    await saveToCache(cacheKey, data);
     return data;
   } catch (error) {
     throw error;
@@ -74,7 +85,7 @@ export const fetchVerses = async (chapterId: number, page: number = 1, translati
 export const fetchVersesByHizb = async (hizbId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
   const perPage = 50;
   const cacheKey = `verses_hizb_${hizbId}_page_${page}_tr_${translationId}_tajweed`;
-  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  const cachedData = await getFromCache<ApiVerseResponse>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
@@ -83,7 +94,7 @@ export const fetchVersesByHizb = async (hizbId: number, page: number = 1, transl
     );
     if (!response.ok) throw new Error('Failed to fetch verses by hizb');
     const data = await response.json();
-    saveToCache(cacheKey, data);
+    await saveToCache(cacheKey, data);
     return data;
   } catch (error) {
     throw error;
@@ -93,7 +104,7 @@ export const fetchVersesByHizb = async (hizbId: number, page: number = 1, transl
 export const fetchVersesByJuz = async (juzId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
   const perPage = 50;
   const cacheKey = `verses_juz_${juzId}_page_${page}_tr_${translationId}_tajweed`;
-  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  const cachedData = await getFromCache<ApiVerseResponse>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
@@ -102,7 +113,7 @@ export const fetchVersesByJuz = async (juzId: number, page: number = 1, translat
     );
     if (!response.ok) throw new Error('Failed to fetch verses by juz');
     const data = await response.json();
-    saveToCache(cacheKey, data);
+    await saveToCache(cacheKey, data);
     return data;
   } catch (error) {
     throw error;
@@ -113,7 +124,7 @@ export const fetchVersesByPage = async (pageId: number, page: number = 1, transl
   // Quran pages are typically small enough to fetch in one go, but we support pagination just in case
   const perPage = 50; 
   const cacheKey = `verses_page_${pageId}_p_${page}_tr_${translationId}_tajweed`;
-  const cachedData = getFromCache<ApiVerseResponse>(cacheKey);
+  const cachedData = await getFromCache<ApiVerseResponse>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
@@ -122,7 +133,7 @@ export const fetchVersesByPage = async (pageId: number, page: number = 1, transl
     );
     if (!response.ok) throw new Error('Failed to fetch verses by page');
     const data = await response.json();
-    saveToCache(cacheKey, data);
+    await saveToCache(cacheKey, data);
     return data;
   } catch (error) {
     throw error;
@@ -131,14 +142,14 @@ export const fetchVersesByPage = async (pageId: number, page: number = 1, transl
 
 export const fetchTranslationResources = async (): Promise<ApiTranslationResourceResponse> => {
   const cacheKey = 'translation_resources_list';
-  const cachedData = getFromCache<ApiTranslationResourceResponse>(cacheKey);
+  const cachedData = await getFromCache<ApiTranslationResourceResponse>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
     const response = await fetch(`${BASE_URL}/resources/translations?language=en`);
     if (!response.ok) throw new Error('Failed to fetch translations list');
     const data = await response.json();
-    saveToCache(cacheKey, data);
+    await saveToCache(cacheKey, data);
     return data;
   } catch (error) {
     throw error;
@@ -147,14 +158,14 @@ export const fetchTranslationResources = async (): Promise<ApiTranslationResourc
 
 export const fetchTafsirList = async (): Promise<ApiTafsirListResponse> => {
   const cacheKey = 'tafsir_resources_list';
-  const cachedData = getFromCache<ApiTafsirListResponse>(cacheKey);
+  const cachedData = await getFromCache<ApiTafsirListResponse>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
     const response = await fetch(`${BASE_URL}/resources/tafsirs?language=en`);
     if (!response.ok) throw new Error('Failed to fetch tafsirs');
     const data = await response.json();
-    saveToCache(cacheKey, data);
+    await saveToCache(cacheKey, data);
     return data;
   } catch (error) {
     throw error;
@@ -163,7 +174,7 @@ export const fetchTafsirList = async (): Promise<ApiTafsirListResponse> => {
 
 export const fetchTafsirContent = async (tafsirId: number, verseKey: string): Promise<TafsirContent> => {
   const cacheKey = `tafsir_${tafsirId}_${verseKey}`;
-  const cachedData = getFromCache<TafsirContent>(cacheKey);
+  const cachedData = await getFromCache<TafsirContent>(cacheKey);
   if (cachedData) return cachedData;
 
   try {
@@ -173,7 +184,7 @@ export const fetchTafsirContent = async (tafsirId: number, verseKey: string): Pr
     
     // API returns { tafsir: { ... } }
     const result = data.tafsir;
-    saveToCache(cacheKey, result);
+    await saveToCache(cacheKey, result);
     return result;
   } catch (error) {
     throw error;
