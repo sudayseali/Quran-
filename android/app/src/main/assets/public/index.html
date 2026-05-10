@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Al Quran</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/assets/manifest-D6NjfQ2G.json" />
+    <meta name="theme-color" content="#047857" />
+
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn-icons-png.flaticon.com https://www.transparenttextures.com; connect-src 'self' https://api.quran.com https://everyayah.com; media-src 'self' https://everyayah.com;">
+    
+    <!-- iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Al Quran">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3024/3024467.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+              arabic: ['Amiri', 'serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #F8FAFC; /* Slate 50 */
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior-y: none;
+        transition: background-color 0.3s, color 0.3s;
+      }
+      .dark body {
+        background-color: #0f172a; /* Slate 900 */
+        color: #f8fafc;
+      }
+      .font-arabic {
+        font-family: 'Amiri', serif;
+        line-height: 2.6;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 3px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #334155;
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .pt-safe {
+        padding-top: env(safe-area-inset-top);
+      }
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+      }
+      .dark .glass-effect {
+        background: rgba(15, 23, 42, 0.95);
+      }
+      .animate-slide-up {
+        animation: slideUp 0.3s ease-out forwards;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+      
+      /* Tajweed Colors */
+      .tajweed-madd { color: #059669; } /* Emerald 600 */
+      .tajweed-ghunnah { color: #ea580c; } /* Orange 600 */
+      .tajweed-idgham { color: #6366f1; } /* Indigo 500 */
+      .tajweed-ikhfa { color: #e11d48; } /* Rose 600 */
+      .tajweed-qalqalah { color: #0284c7; } /* Sky 600 */
+      
+      .dark .tajweed-madd { color: #34d399; }
+      .dark .tajweed-ghunnah { color: #fb923c; }
+      .dark .tajweed-idgham { color: #818cf8; }
+      .dark .tajweed-ikhfa { color: #fb7185; }
+      .dark .tajweed-qalqalah { color: #38bdf8; }
+    </style>
+
+<link rel="stylesheet" href="/index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-CCPloR_Y.js"></script>
+</head>
+  <body>
+    <div id="root"></div>
+</body>
+</html>
