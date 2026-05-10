@@ -107,9 +107,11 @@ export const DetailView: React.FC<DetailViewProps> = ({
       setPagination(null); // Reset pagination
       try {
         let data;
-        const targetId = context.type === 'surah' ? (context.data?.id || (context as any).id) : context.id;
+        let targetId: number | undefined;
+        if (context.type === 'surah') targetId = context.data.id;
+        else if (context.type !== 'settings') targetId = context.id;
 
-        if (context.type === 'surah') {
+        if (context.type === 'surah' && targetId) {
           data = await fetchVerses(targetId, 1, translationId);
         } else if (context.type === 'hizb') {
           data = await fetchVersesByHizb(context.id, 1, translationId);
@@ -143,18 +145,20 @@ export const DetailView: React.FC<DetailViewProps> = ({
     setLoadingMore(true);
     try {
       let data;
-      const nextPage = pagination.next_page;
-      const targetId = context.type === 'surah' ? (context.data?.id || (context as any).id) : context.id;
-      
-      if (context.type === 'surah') {
-        data = await fetchVerses(targetId, nextPage, translationId);
-      } else if (context.type === 'hizb') {
-        data = await fetchVersesByHizb(context.id, nextPage, translationId);
-      } else if (context.type === 'juz') {
-        data = await fetchVersesByJuz(context.id, nextPage, translationId);
-      } else if (context.type === 'page') {
-        data = await fetchVersesByPage(context.id, nextPage, translationId);
-      }
+    const nextPage = pagination.next_page;
+    let targetId: number | undefined;
+    if (context.type === 'surah') targetId = context.data.id;
+    else if (context.type !== 'settings') targetId = context.id;
+    
+    if (context.type === 'surah' && targetId) {
+      data = await fetchVerses(targetId, nextPage, translationId);
+    } else if (context.type === 'hizb') {
+      data = await fetchVersesByHizb(context.id, nextPage, translationId);
+    } else if (context.type === 'juz') {
+      data = await fetchVersesByJuz(context.id, nextPage, translationId);
+    } else if (context.type === 'page') {
+      data = await fetchVersesByPage(context.id, nextPage, translationId);
+    }
 
       if (data) {
         setVerses(prev => [...prev, ...data.verses]);

@@ -85,7 +85,7 @@ export interface ApiTranslationResourceResponse {
 
 // Navigation context to handle Surah, Hizb, Juz, Page, and Calendar views
 export type NavigationContext = 
-  | { type: 'surah'; data: Chapter }
+  | { type: 'surah'; data?: Chapter; id?: number }
   | { type: 'hizb'; id: number }
   | { type: 'juz'; id: number }
   | { type: 'page'; id: number }

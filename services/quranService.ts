@@ -10,15 +10,81 @@ let dbPromise: Promise<IDBPDatabase> | null = null;
 
 const getDB = () => {
   if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, 1, {
-      upgrade(db) {
+    dbPromise = openDB(DB_NAME, 2, {
+      upgrade(db, oldVersion) {
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           db.createObjectStore(STORE_NAME);
+        }
+        if (oldVersion < 2) {
+          if (!db.objectStoreNames.contains('downloads')) {
+            db.createObjectStore('downloads');
+          }
         }
       },
     });
   }
   return dbPromise;
+};
+
+export const checkIsDownloaded = async (key: string): Promise<boolean> => {
+  try {
+    const db = await getDB();
+    const status = await db.get('downloads', key);
+    return status === 'completed';
+  } catch (e) {
+    return false;
+  }
+};
+
+export const setDownloadStatus = async (key: string, status: 'pending' | 'downloading' | 'completed') => {
+  try {
+    const db = await getDB();
+    await db.put('downloads', status, key);
+  } catch (e) {
+    console.error('Error setting download status:', e);
+  }
+};
+
+export const downloadFullQuranText = async (onProgress: (progress: number) => void) => {
+  try {
+    await setDownloadStatus('quran_text', 'downloading');
+    
+    // 1. Fetch Chapters List
+    const chaptersData = await fetchChapters();
+    const chapters = chaptersData.chapters;
+    
+    // 2. Download all verses for each chapter
+    // We do it in chunks to avoid overwhelming the API and the device
+    const totalChapters = chapters.length;
+    let completedChapters = 0;
+
+    for (const chapter of chapters) {
+      // Small delay to prevent API rate limiting
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Fetch all pages for this chapter
+      let currentPage = 1;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const versesData = await fetchVerses(chapter.id, currentPage);
+        if (!versesData.pagination || currentPage >= versesData.pagination.total_pages) {
+          hasMore = false;
+        } else {
+          currentPage++;
+        }
+      }
+      
+      completedChapters++;
+      onProgress(Math.floor((completedChapters / totalChapters) * 100));
+    }
+
+    await setDownloadStatus('quran_text', 'completed');
+    localStorage.setItem('isQuranDownloaded', 'true');
+  } catch (error) {
+    await setDownloadStatus('quran_text', 'pending');
+    throw error;
+  }
 };
 
 const getFromCache = async <T>(key: string): Promise<T | null> => {

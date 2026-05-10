@@ -59,7 +59,7 @@ export const DailyAyah: React.FC<DailyAyahProps> = ({ onNavigate, onShare, onPla
              </div>
              
              <button 
-               onClick={() => onNavigate({ type: 'surah', data: { id: 2, name_simple: 'Al-Baqarah', name_arabic: 'البقرة', verses_count: 286, revelation_place: 'makkah' } })}
+               onClick={() => onNavigate({ type: 'surah', id: 2 })}
                className="flex items-center gap-2 text-sm font-semibold text-white hover:text-amber-400 transition-colors group"
              >
                Read Surah

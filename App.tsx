@@ -19,6 +19,8 @@ import { BookmarksView } from './components/BookmarksView';
 import { ProfileView } from './components/ProfileView';
 import { SettingsView } from './components/SettingsView';
 import { GoToPageModal } from './components/GoToPageModal';
+import { OnboardingScreen } from './components/OnboardingScreen';
+import { DownloadManager } from './components/DownloadManager';
 import { useSettings } from './hooks/useSettings';
 import { MoreVertical, HelpCircle, Info, ExternalLink, Hash } from 'lucide-react';
 
@@ -279,8 +281,17 @@ const App = () => {
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [isDownloaded, setIsDownloaded] = useState<boolean | null>(null);
   
   const { settings, updateSetting } = useSettings();
+
+  useEffect(() => {
+    const checkDownload = () => {
+      const downloaded = localStorage.getItem('isQuranDownloaded');
+      setIsDownloaded(downloaded === 'true');
+    };
+    checkDownload();
+  }, []);
   const isDarkMode = settings.nightMode;
   const toggleDarkMode = () => updateSetting('nightMode', !settings.nightMode);
 
@@ -495,6 +506,7 @@ const App = () => {
     return localStorage.getItem('selectedTranslationName') || 'Sahih International';
   });
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
+  const [showDownloadManager, setShowDownloadManager] = useState(false);
 
   const handleTranslationSelect = (id: number, name: string) => {
     setSelectedTranslationId(id);
@@ -581,11 +593,16 @@ const App = () => {
   return (
     <HashRouter>
         <div className="w-full bg-slate-50 dark:bg-slate-900 min-h-screen relative transition-colors">
+            {isDownloaded === false && (
+              <OnboardingScreen onComplete={() => setIsDownloaded(true)} />
+            )}
+
             <Sidebar 
               isOpen={sidebarOpen} 
               onClose={() => setSidebarOpen(false)} 
               onNavigate={setNavigationContext}
               onOpenLanguage={() => setLanguageModalOpen(true)}
+              onOpenDownloads={() => setShowDownloadManager(true)}
               isDarkMode={isDarkMode}
               toggleDarkMode={toggleDarkMode}
             />
@@ -602,6 +619,10 @@ const App = () => {
               onClose={() => setIsGoToPageOpen(false)}
               onGo={(page) => setNavigationContext({ type: 'page', id: page })}
             />
+
+            {showDownloadManager && (
+              <DownloadManager onClose={() => setShowDownloadManager(false)} />
+            )}
             
             {renderContent()}
 
