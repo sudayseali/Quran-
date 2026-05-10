@@ -1,10 +1,12 @@
 import { Howl } from 'howler';
 import { Chapter } from '../types';
 import { audioDownloadService } from './audioDownloadService';
+import { fetchChapterAudioUrl } from './quranService';
 
 export interface AudioState {
   isPlaying: boolean;
   currentSurah: Chapter | null;
+  currentVerseKey: string | null;
   currentTime: number;
   duration: number;
   playbackSpeed: number;
@@ -80,24 +82,47 @@ class AudioService {
     this.queue = playlist.length > 0 ? playlist : [surah];
     this.currentIndex = this.queue.findIndex(s => s.id === surah.id);
     
+    // Get settings
+    let reciterId = 'mishari_al-afasy';
+    let recitationApiId = 7;
+    try {
+      const saved = localStorage.getItem('app_settings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        if (settings.selectedReciter) reciterId = settings.selectedReciter;
+        if (settings.recitationApiId) recitationApiId = settings.recitationApiId;
+      }
+    } catch(e) {}
+    
     // Check for offline version first
-    const reciterId = 'mishari_al-afasy';
     const localPath = await audioDownloadService.getLocalPath(surah.id, reciterId);
     
     let url;
+    let urlList: string[] = [];
     if (localPath) {
-        url = localPath;
+        urlList = [localPath];
         console.log('Playing from local storage:', localPath);
     } else {
+        try {
+          const fetchedUrl = await fetchChapterAudioUrl(recitationApiId, surah.id);
+          if (fetchedUrl) {
+            urlList.push(fetchedUrl);
+          }
+        } catch(e) {
+          console.error("Quran api hit limit, falling back", e);
+        }
+        
+        // 100% free fallback
         const padId = surah.id.toString().padStart(3, '0');
-        url = `https://download.quranicaudio.com/quran/${reciterId}/${padId}.mp3`;
-        console.log('Streaming from web:', url);
+        const fallbackUrl = `https://download.quranicaudio.com/quran/${reciterId}/${padId}.mp3`;
+        urlList.push(fallbackUrl);
+        console.log('Streaming from web URLs:', urlList);
     }
     
     this.onStateChange({ isBuffering: true, currentSurah: surah, queue: this.queue, currentIndex: this.currentIndex });
 
     this.howl = new Howl({
-      src: [url],
+      src: urlList,
       html5: true, // Crucial for background audio and larger files
       rate: this.playbackSpeed,
       onplay: () => {

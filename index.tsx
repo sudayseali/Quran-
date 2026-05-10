@@ -1,6 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+
+// Set up StatusBar for mobile
+if (Capacitor.isNativePlatform()) {
+  StatusBar.setOverlaysWebView({ overlay: true }).catch(console.error);
+  StatusBar.setStyle({ style: Style.Light }).catch(console.error);
+}
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {

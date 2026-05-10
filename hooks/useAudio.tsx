@@ -17,6 +17,7 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [state, setState] = useState<AudioState>({
     isPlaying: false,
     currentSurah: null,
+    currentVerseKey: null,
     currentTime: 0,
     duration: 0,
     playbackSpeed: 1,

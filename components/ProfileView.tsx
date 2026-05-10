@@ -15,7 +15,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ versesReadToday, daily
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-900 pb-24 transition-colors animate-fade-in">
       <div className="max-w-3xl mx-auto">
         {/* Top Bar */}
-        <div className="px-6 py-4 pt-8 bg-[#F8FAFC]/90 dark:bg-slate-900/90 backdrop-blur-xl sticky top-0 z-20 border-b border-transparent">
+        <div 
+          className="px-6 py-4 bg-[#F8FAFC]/90 dark:bg-slate-900/90 backdrop-blur-xl sticky top-0 z-20 border-b border-transparent transition-colors"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
+        >
           <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent">
             My Profile
           </h1>

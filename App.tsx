@@ -83,7 +83,10 @@ const Home = ({
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-900 pb-24 transition-colors">
       <div className="max-w-3xl mx-auto">
         {/* Top Bar */}
-        <div className="px-6 py-4 pt-8 flex justify-between items-center bg-[#F8FAFC]/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-20 border-b border-transparent transition-all">
+        <div 
+          className="px-6 py-4 flex justify-between items-center bg-[#F8FAFC]/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-20 border-b border-transparent transition-all"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
+        >
           <div className="flex items-center gap-3">
               <button 
                 onClick={onOpenSidebar}

@@ -53,7 +53,10 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({ bookmarks, chapter
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-900 pb-24 transition-colors animate-fade-in">
       <div className="max-w-3xl mx-auto">
         {/* Top Bar */}
-        <div className="px-6 py-4 pt-8 flex items-center gap-4 bg-[#F8FAFC]/90 dark:bg-slate-900/90 backdrop-blur-xl sticky top-0 z-20 border-b border-transparent">
+        <div 
+        className="px-6 py-4 flex items-center gap-4 bg-[#F8FAFC]/90 dark:bg-slate-900/90 backdrop-blur-xl sticky top-0 z-20 border-b border-transparent transition-colors"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
+      >
           <button 
             onClick={onBack}
             className="p-2 -ml-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"

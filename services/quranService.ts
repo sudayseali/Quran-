@@ -113,6 +113,41 @@ export const sanitizeHtml = (html: string): string => {
   return DOMPurify.sanitize(html);
 };
 
+export const fetchRecitations = async (): Promise<any> => {
+  const cacheKey = 'recitations_list';
+  const cachedData = await getFromCache<any>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(`${BASE_URL}/resources/recitations?language=en`);
+    if (!response.ok) throw new Error('Failed to fetch recitations');
+    const data = await response.json();
+    await saveToCache(cacheKey, data);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchChapterAudioUrl = async (recitationId: number, chapterId: number): Promise<string> => {
+  const cacheKey = `chapter_audio_${recitationId}_${chapterId}`;
+  const cachedData = await getFromCache<string>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(`${BASE_URL}/chapter_recitations/${recitationId}/${chapterId}`);
+    if (!response.ok) throw new Error('Failed to fetch chapter audio');
+    const data = await response.json();
+    const audioUrl = data?.audio_file?.audio_url;
+    if (audioUrl) {
+      await saveToCache(cacheKey, audioUrl);
+    }
+    return audioUrl;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const fetchChapters = async (): Promise<ApiChapterResponse> => {
   const cacheKey = 'chapters_list';
   const cachedData = await getFromCache<ApiChapterResponse>(cacheKey);
@@ -228,7 +263,7 @@ export const fetchTafsirList = async (): Promise<ApiTafsirListResponse> => {
   if (cachedData) return cachedData;
 
   try {
-    const response = await fetch(`${BASE_URL}/resources/tafsirs?language=en`);
+    const response = await fetch(`${BASE_URL}/resources/tafsirs`);
     if (!response.ok) throw new Error('Failed to fetch tafsirs');
     const data = await response.json();
     await saveToCache(cacheKey, data);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Moon, Sun, Type, Layout, Globe, BookOpen } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Type, Layout, Globe, BookOpen, Mic } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 
 interface SettingsViewProps {
@@ -12,7 +12,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors pb-10 animate-fade-in">
       {/* Header */}
-      <div className="sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl z-30 border-b border-emerald-100 dark:border-slate-800 shadow-sm">
+      <div 
+        className="sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl z-30 border-b border-emerald-100 dark:border-slate-800 shadow-sm transition-colors"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top))' }}
+      >
         <div className="max-w-3xl mx-auto flex items-center px-4 py-4">
           <button onClick={onBack} className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors mr-3">
             <ArrowLeft size={24} />
@@ -87,6 +90,47 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
             previewText="In the name of Allah, the Entirely Merciful, the Especially Merciful."
             fontClass="font-sans"
           />
+        </SettingsCard>
+
+        {/* Audio Settings */}
+        <SettingsCard icon={Mic} title="Audio Settings">
+          <div className="p-3 sm:px-4 flex flex-col gap-2">
+            <h4 className="text-[15px] font-semibold text-slate-800 dark:text-slate-200">Qaari (Reciter)</h4>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-snug mb-2">Fadlan dooro Qaari leh cod macaan (Viral Voices available!)</p>
+            <select 
+              className="w-full bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all appearance-none"
+              value={settings.recitationApiId}
+              onChange={(e) => {
+                const apiId = parseInt(e.target.value, 10);
+                // Simple map to offline slug
+                let slug = 'mishari_al-afasy';
+                switch(apiId) {
+                  case 7: slug = 'mishari_al-afasy'; break;
+                  case 2: slug = 'abdulbasit_abdulsamad_murattal'; break;
+                  case 4: slug = 'mahmoud_khalil_al_husary'; break;
+                  case 11: slug = 'yasser_ad-dussary'; break;
+                  case 3: slug = 'abdur-rahman_as-sudais'; break;
+                  case 5: slug = 'abu_bakr_shatri'; break;
+                  case 12: slug = 'maher_almuaiqly'; break;
+                  case 9: slug = 'muhammad_siddiq_al-minshawi'; break;
+                  case 54: slug = 'wadee_hammadi_al-yamani'; break;
+                  case 51: slug = 'muhammad_ayyub'; break;
+                }
+                updateSetting('recitationApiId', apiId);
+                updateSetting('selectedReciter', slug);
+              }}
+            >
+              <option value={7}>Mishary Rashid Alafasy</option>
+              <option value={2}>AbdulBaset AbdulSamad</option>
+              <option value={11}>Yasser Al-Dosari (Viral & Emotional)</option>
+              <option value={12}>Maher Al Muaiqly</option>
+              <option value={54}>Wadih Al-Yamani (Macaan)</option>
+              <option value={3}>Abdur-Rahman as-Sudais</option>
+              <option value={5}>Abu Bakr Al Shatri</option>
+              <option value={9}>Minshawi (Murattal)</option>
+              <option value={4}>Mahmoud Khalil Al-Husary</option>
+            </select>
+          </div>
         </SettingsCard>
 
       </div>

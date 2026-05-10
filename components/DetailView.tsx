@@ -247,7 +247,14 @@ export const DetailView: React.FC<DetailViewProps> = ({
     // For now, we'll just play the surah if they click a verse, 
     // or we could implement per-verse in audioService.
     if (context.type === 'surah' && context.data) {
-        playSurah(context.data);
+        if (currentSurah?.id === context.data.id) {
+            // If it's already the loaded surah, just resume playing to avoid restarting
+            if (!isPlaying) {
+                togglePlay();
+            }
+        } else {
+            playSurah(context.data);
+        }
     }
   };
 
@@ -387,7 +394,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
            {filteredVerses.map((verse) => {
               const chapterId = verse.verse_key.split(':')[0];
               const verseNum = verse.verse_key.split(':')[1];
-              const isPlayingVerse = isPlaying && currentSurah?.id === Number(chapterId);
+              const isPlayingVerse = false; // We don't have timestamps for verse-by-verse highlighting yet
               
               const showHeader = lastChapter && lastChapter !== chapterId;
               lastChapter = chapterId;
@@ -404,10 +411,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                    )}
                    <span 
                      id={`verse-${verse.verse_key}`}
-                   onClick={() => {
-                      toggleAudio(verse.verse_key); // Use toggleAudio here for single click interaction
-                   }}
-                   className={`hover:bg-emerald-50/50 dark:hover:bg-emerald-900/30 rounded cursor-pointer transition-colors px-1 ${isPlayingVerse ? 'bg-emerald-100/50 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100' : ''}`}
+                   className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/30 rounded transition-colors px-1"
                  >
                    {showTajweed && verse.text_uthmani_tajweed ? (
                      <span dangerouslySetInnerHTML={{ __html: verse.text_uthmani_tajweed }} />
@@ -455,7 +459,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-900 pb-24 animate-fade-in relative transition-colors">
       {/* Header */}
-      <div className="sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl z-30 border-b border-emerald-100 dark:border-emerald-900/30 shadow-sm transition-colors">
+      <div 
+        className="sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl z-30 border-b border-emerald-100 dark:border-emerald-900/30 shadow-sm transition-colors"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-between items-center px-4 py-4">
             <button onClick={onBack} className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
@@ -648,13 +655,6 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                {revealedVerses.has(verse.verse_key) ? 'Hide' : 'Reveal'}
                              </button>
                           )}
-                          <button 
-                            onClick={() => toggleAudio(verse.verse_key)}
-                            className={`p-2 rounded-full hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors ${isCurrent ? 'text-emerald-600' : 'text-slate-400'}`}
-                            title="Play"
-                          >
-                            {isCurrent && isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                          </button>
                           <button 
                             onClick={() => openTafsir(verse)}
                             className="p-2 rounded-full hover:bg-emerald-50 dark:hover:bg-slate-700 text-slate-400 hover:text-emerald-600 transition-colors"
