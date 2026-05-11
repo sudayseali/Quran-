@@ -136,11 +136,24 @@ class AudioService {
       onseek: () => this.onStateChange({ currentTime: this.howl?.seek() as number }),
       onloaderror: (id, err) => {
         console.error('Howl load error:', err);
-        this.onStateChange({ isBuffering: false });
+        this.onStateChange({ isBuffering: false, isPlaying: false });
+        alert('Could not load audio. Please check your internet connection.');
+      },
+      onplayerror: (id, err) => {
+        console.error('Howl play error:', err);
+        this.onStateChange({ isBuffering: false, isPlaying: false });
+        this.howl?.once('unlock', () => {
+          this.howl?.play();
+        });
       }
     });
 
-    this.howl.play();
+    try {
+      this.howl.play();
+    } catch (e) {
+      console.error('Playback initiation error:', e);
+      this.onStateChange({ isBuffering: false, isPlaying: false });
+    }
 
     // Start timer for progress update
     const updateProgress = () => {

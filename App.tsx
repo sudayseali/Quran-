@@ -441,6 +441,8 @@ const App = () => {
 
   // Helper to render content based on navigation
   const renderContent = () => {
+    if (isDownloaded !== true) return null;
+
     if (navigationContext?.type === 'settings') {
       return <SettingsView onBack={() => setNavigationContext(null)} />;
     }
