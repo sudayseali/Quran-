@@ -15,7 +15,8 @@ export const AudioPlayer: React.FC = () => {
     playPrevious, 
     seek, 
     setSpeed,
-    isBuffering 
+    isBuffering,
+    hasError
   } = useAudio();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -82,9 +83,14 @@ export const AudioPlayer: React.FC = () => {
                 <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
                   {currentSurah.name_simple}
                 </h2>
-                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">
+                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-lg mb-2">
                   {currentSurah.name_arabic}
                 </p>
+                {hasError && (
+                  <p className="text-red-500 font-medium text-sm animate-pulse">
+                    Please check internet connection or download audio
+                  </p>
+                )}
               </div>
 
               {/* Progress Slider */}
@@ -161,7 +167,7 @@ export const AudioPlayer: React.FC = () => {
                     {currentSurah.name_simple}
                   </h3>
                   <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 leading-none mt-1">
-                    {isPlaying ? 'Now Reciting' : 'Paused'}
+                    {hasError ? <span className="text-red-500">No internet</span> : (isPlaying ? 'Now Reciting' : 'Paused')}
                   </p>
                 </div>
               </div>

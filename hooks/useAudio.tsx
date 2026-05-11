@@ -24,6 +24,7 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     queue: [],
     currentIndex: -1,
     isBuffering: false,
+    hasError: false,
   });
 
   useEffect(() => {

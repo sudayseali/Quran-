@@ -13,6 +13,7 @@ export interface AudioState {
   queue: Chapter[];
   currentIndex: number;
   isBuffering: boolean;
+  hasError: boolean;
 }
 
 class AudioService {
@@ -119,14 +120,14 @@ class AudioService {
         console.log('Streaming from web URLs:', urlList);
     }
     
-    this.onStateChange({ isBuffering: true, currentSurah: surah, queue: this.queue, currentIndex: this.currentIndex });
+    this.onStateChange({ isBuffering: true, hasError: false, currentSurah: surah, queue: this.queue, currentIndex: this.currentIndex });
 
     this.howl = new Howl({
       src: urlList,
       html5: true, // Crucial for background audio and larger files
       rate: this.playbackSpeed,
       onplay: () => {
-        this.onStateChange({ isPlaying: true, isBuffering: false, duration: this.howl?.duration() });
+        this.onStateChange({ isPlaying: true, isBuffering: false, hasError: false, duration: this.howl?.duration() });
         this.updateMetadata();
       },
       onpause: () => this.onStateChange({ isPlaying: false }),
@@ -136,8 +137,7 @@ class AudioService {
       onseek: () => this.onStateChange({ currentTime: this.howl?.seek() as number }),
       onloaderror: (id, err) => {
         console.error('Howl load error:', err);
-        this.onStateChange({ isBuffering: false, isPlaying: false });
-        alert('Could not load audio. Please check your internet connection.');
+        this.onStateChange({ isBuffering: false, isPlaying: false, hasError: true });
       },
       onplayerror: (id, err) => {
         console.error('Howl play error:', err);
