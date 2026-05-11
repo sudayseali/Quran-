@@ -42,8 +42,8 @@ jobs:
 
       - name: Setup Keystore
         run: |
-          if [ -n "${{ secrets.KEYSTORE_FILE_BASE64 }}" ]; then
-            echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
           fi
 
       - name: Setup Gradle
@@ -54,7 +54,7 @@ jobs:
       - name: Build Release APK
         working-directory: android
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
