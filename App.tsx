@@ -25,7 +25,9 @@ import { OnboardingScreen } from './components/OnboardingScreen';
 import { DownloadManager } from './components/DownloadManager';
 import { GlobalSearch } from './components/GlobalSearch';
 import { useSettings } from './hooks/useSettings';
-import { MoreVertical, HelpCircle, Info, ExternalLink, Hash } from 'lucide-react';
+import { TasbihCounter } from './components/TasbihCounter';
+import { PrayerTimes } from './components/PrayerTimes';
+import { MoreVertical, HelpCircle, Info, ExternalLink, Hash, Book, Compass, Clock, Activity } from 'lucide-react';
 
 // Main Home Component
 const Home = ({ 
@@ -99,22 +101,9 @@ const Home = ({
               </button>
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-1" id="animated-icons-container">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1], rotate: [0, 5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="bg-emerald-600 p-1 rounded-md shadow-sm z-10"
-                    id="icon-1"
-                  >
-                    <div className="w-4 h-4 border border-white/80 rounded-sm"></div>
-                  </motion.div>
-                  <motion.div
-                    animate={{ scale: [1.2, 1, 1.2], opacity: [0.7, 1, 0.7], rotate: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="bg-emerald-500 p-1 rounded-full shadow-sm z-0"
-                    id="icon-2"
-                  >
-                    <div className="w-4 h-4 border border-white/60 rounded-full"></div>
-                  </motion.div>
+                  <div className="bg-emerald-600 p-1.5 rounded-lg shadow-sm z-10 flex items-center justify-center">
+                    <Book size={16} className="text-white" />
+                  </div>
                 </div>
                 <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent tracking-tight ml-1">
                   Al Quran Pro
@@ -176,6 +165,34 @@ const Home = ({
 
         <ReadingTracker versesReadToday={versesReadToday} dailyGoal={dailyGoal} />
         <LastRead lastRead={lastRead} onNavigate={onNavigate} />
+
+        {/* Quick Actions */}
+        <div className="px-6 mb-8 grid grid-cols-4 gap-2">
+           <button onClick={() => onNavigate({ type: 'prayertimes' })} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 transition-colors active:scale-95">
+             <div className="bg-orange-100 dark:bg-orange-900/50 p-2.5 rounded-full mb-2">
+                <Clock size={20} className="text-orange-600 dark:text-orange-400" />
+             </div>
+             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Salaah</span>
+           </button>
+           <button onClick={() => onNavigate({ type: 'tasbih' })} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 transition-colors active:scale-95">
+             <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2.5 rounded-full mb-2">
+                <Activity size={20} className="text-emerald-600 dark:text-emerald-400" />
+             </div>
+             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Tasbih</span>
+           </button>
+           <button className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 transition-colors active:scale-95">
+             <div className="bg-blue-100 dark:bg-blue-900/50 p-2.5 rounded-full mb-2">
+                <Compass size={20} className="text-blue-600 dark:text-blue-400" />
+             </div>
+             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Qibla</span>
+           </button>
+           <button className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 transition-colors active:scale-95">
+             <div className="bg-purple-100 dark:bg-purple-900/50 p-2.5 rounded-full mb-2">
+                <Book size={20} className="text-purple-600 dark:text-purple-400" />
+             </div>
+             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Duas</span>
+           </button>
+        </div>
 
         {/* Quick Filter Tabs */}
         <div className="px-6 mb-6 overflow-x-auto scrollbar-hide py-1">
@@ -446,8 +463,16 @@ const App = () => {
     if (navigationContext?.type === 'settings') {
       return <SettingsView onBack={() => setNavigationContext(null)} />;
     }
+    
+    if (navigationContext?.type === 'tasbih') {
+      return <TasbihCounter onNavigate={setNavigationContext} />;
+    }
 
-    if (navigationContext) {
+    if (navigationContext?.type === 'prayertimes') {
+      return <PrayerTimes onNavigate={setNavigationContext} />;
+    }
+
+    if (navigationContext?.type === 'surah' || navigationContext?.type === 'juz' || navigationContext?.type === 'hizb' || navigationContext?.type === 'page') {
       return (
         <DetailView 
           context={navigationContext} 

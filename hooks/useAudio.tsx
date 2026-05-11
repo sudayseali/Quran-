@@ -9,6 +9,7 @@ interface AudioContextType extends AudioState {
   playPrevious: () => void;
   seek: (time: number) => void;
   setSpeed: (speed: number) => void;
+  toggleLoop: () => void;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -25,6 +26,7 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     currentIndex: -1,
     isBuffering: false,
     hasError: false,
+    isLooping: false,
   });
 
   useEffect(() => {
@@ -41,6 +43,7 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     playPrevious: () => audioService.playPrevious(),
     seek: (time) => audioService.seek(time),
     setSpeed: (speed) => audioService.setSpeed(speed),
+    toggleLoop: () => audioService.toggleLoop(),
   };
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;

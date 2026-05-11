@@ -16,7 +16,9 @@ export const AudioPlayer: React.FC = () => {
     seek, 
     setSpeed,
     isBuffering,
-    hasError
+    hasError,
+    isLooping,
+    toggleLoop
   } = useAudio();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -150,7 +152,10 @@ export const AudioPlayer: React.FC = () => {
                   </button>
                 </div>
 
-                <button className="p-3 text-slate-400 active:scale-90 transition-all">
+                <button 
+                  onClick={toggleLoop}
+                  className={`p-3 active:scale-90 transition-all ${isLooping ? 'text-emerald-500' : 'text-slate-400'}`}
+                >
                   <Repeat size={20} />
                 </button>
               </div>

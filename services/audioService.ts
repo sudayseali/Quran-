@@ -14,6 +14,7 @@ export interface AudioState {
   currentIndex: number;
   isBuffering: boolean;
   hasError: boolean;
+  isLooping: boolean;
 }
 
 class AudioService {
@@ -23,9 +24,35 @@ class AudioService {
   private queue: Chapter[] = [];
   private currentIndex: number = -1;
   private playbackSpeed: number = 1;
+  private currentPlayId: number = 0;
+  private loopSurah: boolean = false;
+  private progressAnimationFrame: number | null = null;
 
   constructor() {
     this.setupMediaSession();
+  }
+
+  private startProgressTracker() {
+    const updateProgress = () => {
+      if (this.howl && this.howl.playing()) {
+        const seek = this.howl.seek();
+        if (typeof seek === 'number') {
+          this.onStateChange({ currentTime: seek });
+        }
+      }
+      this.progressAnimationFrame = requestAnimationFrame(updateProgress);
+    };
+    if (this.progressAnimationFrame !== null) {
+      cancelAnimationFrame(this.progressAnimationFrame);
+    }
+    updateProgress();
+  }
+
+  private stopProgressTracker() {
+    if (this.progressAnimationFrame !== null) {
+      cancelAnimationFrame(this.progressAnimationFrame);
+      this.progressAnimationFrame = null;
+    }
   }
 
   private setupMediaSession() {
@@ -75,8 +102,12 @@ class AudioService {
   }
 
   async playSurah(surah: Chapter, playlist: Chapter[] = []) {
+    const playId = Date.now();
+    this.currentPlayId = playId;
+
     if (this.howl) {
       this.howl.unload();
+      this.howl = null;
     }
 
     this.currentSurah = surah;
@@ -97,6 +128,11 @@ class AudioService {
     
     // Check for offline version first
     const localPath = await audioDownloadService.getLocalPath(surah.id, reciterId);
+    
+    // If a new play request was issued while we were fetching the path, abort.
+    if (this.currentPlayId !== playId) {
+      return;
+    }
     
     let url;
     let urlList: string[] = [];
@@ -120,6 +156,15 @@ class AudioService {
         console.log('Streaming from web URLs:', urlList);
     }
     
+    // Abort again just in case fetchChapterAudioUrl took some time
+    if (this.currentPlayId !== playId) {
+      return;
+    }
+
+    if (this.howl) {
+      this.howl.unload();
+    }
+
     this.onStateChange({ isBuffering: true, hasError: false, currentSurah: surah, queue: this.queue, currentIndex: this.currentIndex });
 
     this.howl = new Howl({
@@ -129,12 +174,28 @@ class AudioService {
       onplay: () => {
         this.onStateChange({ isPlaying: true, isBuffering: false, hasError: false, duration: this.howl?.duration() });
         this.updateMetadata();
+        this.startProgressTracker();
       },
-      onpause: () => this.onStateChange({ isPlaying: false }),
-      onstop: () => this.onStateChange({ isPlaying: false }),
-      onend: () => this.playNext(),
+      onpause: () => {
+        this.onStateChange({ isPlaying: false });
+        this.stopProgressTracker();
+      },
+      onstop: () => {
+        this.onStateChange({ isPlaying: false });
+        this.stopProgressTracker();
+      },
+      onend: () => {
+        if (this.loopSurah) {
+           this.howl?.play();
+        } else {
+           this.playNext();
+        }
+      },
       onload: () => this.onStateChange({ duration: this.howl?.duration() }),
-      onseek: () => this.onStateChange({ currentTime: this.howl?.seek() as number }),
+      onseek: () => {
+         const seek = this.howl?.seek();
+         if (typeof seek === 'number') this.onStateChange({ currentTime: seek });
+      },
       onloaderror: (id, err) => {
         console.error('Howl load error:', err);
         this.onStateChange({ isBuffering: false, isPlaying: false, hasError: true });
@@ -154,15 +215,6 @@ class AudioService {
       console.error('Playback initiation error:', e);
       this.onStateChange({ isBuffering: false, isPlaying: false });
     }
-
-    // Start timer for progress update
-    const updateProgress = () => {
-      if (this.howl && this.howl.playing()) {
-        this.onStateChange({ currentTime: this.howl.seek() as number });
-        requestAnimationFrame(updateProgress);
-      }
-    };
-    updateProgress();
   }
 
   play() {
@@ -198,6 +250,11 @@ class AudioService {
     if (this.currentIndex > 0) {
       this.playSurah(this.queue[this.currentIndex - 1], this.queue);
     }
+  }
+
+  toggleLoop() {
+    this.loopSurah = !this.loopSurah;
+    this.onStateChange({ isLooping: this.loopSurah });
   }
 }
 

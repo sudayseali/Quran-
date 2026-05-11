@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { fetchChapterAudioUrl } from './quranService';
 
 class AudioDownloadService {
   private static instance: AudioDownloadService;
@@ -14,20 +15,33 @@ class AudioDownloadService {
   }
 
   async downloadSurah(surahId: number, reciterId: string, onProgress?: (p: number) => void): Promise<string> {
-    const padId = surahId.toString().padStart(3, '0');
-    const url = `https://download.quranicaudio.com/quran/${reciterId}/${padId}.mp3`;
     const fileName = `surah_${surahId}_${reciterId}.mp3`;
+    
+    let url = '';
+    try {
+       const saved = localStorage.getItem('app_settings');
+       let recitationApiId = 7;
+       if (saved) {
+         const settings = JSON.parse(saved);
+         if (settings.recitationApiId) recitationApiId = settings.recitationApiId;
+       }
+       const fetchedUrl = await fetchChapterAudioUrl(recitationApiId, surahId);
+       if (fetchedUrl) url = fetchedUrl;
+    } catch(e) {}
+
+    if (!url) {
+       const padId = surahId.toString().padStart(3, '0');
+       url = `https://download.quranicaudio.com/quran/${reciterId}/${padId}.mp3`;
+    }
 
     if (Capacitor.getPlatform() === 'web') {
-      // In web, we could use Cache API
       const cache = await caches.open('quran-audio-cache');
       const response = await fetch(url);
       if (!response.ok) throw new Error('Download failed');
       
-      // Note: Truly tracking progress in fetch requires readable stream, 
-      // skipping for brevity or implement if critical.
-      await cache.put(url, response.clone());
-      return url; // Still use URL as key for cache
+      const cacheKey = new URL(`/cache/audio/${fileName}`, location.origin).toString();
+      await cache.put(cacheKey, response.clone());
+      return cacheKey;
     }
 
     // Capacitor Native
@@ -52,9 +66,16 @@ class AudioDownloadService {
     
     if (Capacitor.getPlatform() === 'web') {
         const cache = await caches.open('quran-audio-cache');
-        const url = `https://download.quranicaudio.com/quran/${reciterId}/${surahId.toString().padStart(3, '0')}.mp3`;
-        const match = await cache.match(url);
-        return match ? url : null;
+        const cacheKey = new URL(`/cache/audio/${fileName}`, location.origin).toString();
+        const match = await cache.match(cacheKey);
+        
+        // Also check old hardcoded format for backwards compatibility
+        if (!match) {
+           const oldUrl = `https://download.quranicaudio.com/quran/${reciterId}/${surahId.toString().padStart(3, '0')}.mp3`;
+           const oldMatch = await cache.match(oldUrl);
+           return oldMatch ? oldUrl : null;
+        }
+        return cacheKey;
     }
 
     try {
@@ -78,8 +99,11 @@ class AudioDownloadService {
      const fileName = `surah_${surahId}_${reciterId}.mp3`;
      if (Capacitor.getPlatform() === 'web') {
          const cache = await caches.open('quran-audio-cache');
-         const url = `https://download.quranicaudio.com/quran/${reciterId}/${surahId.toString().padStart(3, '0')}.mp3`;
-         await cache.delete(url);
+         const cacheKey = new URL(`/cache/audio/${fileName}`, location.origin).toString();
+         await cache.delete(cacheKey);
+         
+         const oldUrl = `https://download.quranicaudio.com/quran/${reciterId}/${surahId.toString().padStart(3, '0')}.mp3`;
+         await cache.delete(oldUrl);
          return;
      }
 

@@ -89,4 +89,7 @@ export type NavigationContext =
   | { type: 'hizb'; id: number }
   | { type: 'juz'; id: number }
   | { type: 'page'; id: number }
-  | { type: 'settings' };
+  | { type: 'settings' }
+  | { type: 'home' }
+  | { type: 'tasbih' }
+  | { type: 'prayertimes' };
