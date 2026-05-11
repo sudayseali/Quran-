@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Home, BookOpen, Settings, Globe, Share2, Heart, Compass, Clock, Calendar, Moon, Sun, Download, Search } from 'lucide-react';
+import { X, Home, BookOpen, Settings, Globe, Share2, Heart, Compass, Clock, Calendar, Moon, Sun, Download, Search, HelpCircle, Info, ExternalLink } from 'lucide-react';
 import { NavigationContext } from '../types';
 
 interface SidebarProps {
@@ -72,11 +72,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, o
             
             <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-4">Community & Support</h3>
-                <SidebarItem icon={Share2} label="Share App" onClick={onClose} />
-                <SidebarItem icon={Heart} label="Support WhatsApp: 0657864155" onClick={() => {
-                  window.open('https://api.whatsapp.com/send?phone=252657864155', '_blank');
+                <SidebarItem icon={Share2} label="Share App" onClick={async () => {
+                   if (navigator.share) {
+                     try {
+                       await navigator.share({
+                         title: 'Al Quran Pro',
+                         text: 'Check out this amazing offline Quran app with audio and tafsir!',
+                         url: window.location.href
+                       });
+                     } catch (e) {
+                       console.log('Share failed');
+                     }
+                   } else {
+                     alert('Sharing is not supported on this browser.');
+                   }
+                   onClose();
+                }} />
+                <SidebarItem icon={Heart} label="Support (WhatsApp: 0657864155 - No Voice Only Text)" onClick={() => {
+                  window.open('https://api.whatsapp.com/send?phone=252657864155&text=Assalamu%20Alaikum%2C%20I%20need%20help%20with%20Al%20Quran%20Pro%20App', '_blank');
                   onClose();
                 }} />
+                <SidebarItem icon={HelpCircle} label="Help" onClick={() => { alert('Coming soon / dhawan la filayo'); onClose(); }} />
+                <SidebarItem icon={Info} label="About Us" onClick={() => { alert('Coming soon / dhawan la filayo'); onClose(); }} />
+                <SidebarItem icon={ExternalLink} label="Other Apps" onClick={() => { alert('Coming soon / dhawan la filayo'); onClose(); }} />
             </div>
           </div>
           

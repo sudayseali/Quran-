@@ -1,6 +1,7 @@
 import { ApiChapterResponse, ApiVerseResponse, ApiTafsirListResponse, TafsirContent, ApiTranslationResourceResponse } from '../types';
 import { openDB, IDBPDatabase } from 'idb';
 import DOMPurify from 'dompurify';
+import { dbService } from './dbService';
 
 const BASE_URL = 'https://api.quran.com/api/v4';
 const DB_NAME = 'QuranAppDB';
@@ -169,6 +170,11 @@ export const fetchChapterAudioTimings = async (recitationId: number, chapterId: 
 };
 
 export const fetchChapters = async (): Promise<ApiChapterResponse> => {
+  const offlineChapters = await dbService.getChapters();
+  if (offlineChapters.length > 0) {
+    return { chapters: offlineChapters };
+  }
+
   const cacheKey = 'chapters_list';
   const cachedData = await getFromCache<ApiChapterResponse>(cacheKey);
   if (cachedData) return cachedData;
@@ -186,6 +192,31 @@ export const fetchChapters = async (): Promise<ApiChapterResponse> => {
 
 export const fetchVerses = async (chapterId: number, page: number = 1, translationId: number = 131): Promise<ApiVerseResponse> => {
   const perPage = 50; 
+  
+  // Try IndexedDB first if we have full download
+  const isFull = localStorage.getItem('isQuranFullyDownloaded') === 'true';
+  // Note: Only use DB if the translation matches what we stored 
+  // (We assume the default translation 131 is what's downloaded)
+  if (isFull && translationId === 131) {
+    const allVerses = await dbService.getVersesByChapter(chapterId);
+    if (allVerses.length > 0) {
+      // Reconstruct pagination
+      const start = (page - 1) * perPage;
+      const end = start + perPage;
+      const paginatedVerses = allVerses.slice(start, end);
+      return {
+        verses: paginatedVerses,
+        pagination: {
+          per_page: perPage,
+          current_page: page,
+          next_page: end < allVerses.length ? page + 1 : null,
+          total_pages: Math.ceil(allVerses.length / perPage),
+          total_records: allVerses.length
+        }
+      };
+    }
+  }
+
   const cacheKey = `verses_chapter_${chapterId}_page_${page}_tr_${translationId}_tajweed`;
   const cachedData = await getFromCache<ApiVerseResponse>(cacheKey);
   if (cachedData) return cachedData;
@@ -294,6 +325,9 @@ export const fetchTafsirList = async (): Promise<ApiTafsirListResponse> => {
 };
 
 export const fetchTafsirContent = async (tafsirId: number, verseKey: string): Promise<TafsirContent> => {
+  const offlineTafsir = await dbService.getTafsirContent(tafsirId, verseKey);
+  if (offlineTafsir) return offlineTafsir;
+
   const cacheKey = `tafsir_${tafsirId}_${verseKey}`;
   const cachedData = await getFromCache<TafsirContent>(cacheKey);
   if (cachedData) return cachedData;
@@ -307,6 +341,17 @@ export const fetchTafsirContent = async (tafsirId: number, verseKey: string): Pr
     const result = data.tafsir;
     await saveToCache(cacheKey, result);
     return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchTafsirByChapter = async (tafsirId: number, chapterId: number): Promise<any[]> => {
+  try {
+    const response = await fetch(`${BASE_URL}/tafsirs/${tafsirId}/by_chapter/${chapterId}`);
+    if (!response.ok) throw new Error('Failed to fetch tafsir by chapter');
+    const data = await response.json();
+    return data.tafsirs || [];
   } catch (error) {
     throw error;
   }

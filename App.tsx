@@ -23,6 +23,7 @@ import { SettingsView } from './components/SettingsView';
 import { GoToPageModal } from './components/GoToPageModal';
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { DownloadManager } from './components/DownloadManager';
+import { TafsirSelector } from './components/TafsirSelector';
 import { GlobalSearch } from './components/GlobalSearch';
 import { useSettings } from './hooks/useSettings';
 import { TasbihCounter } from './components/TasbihCounter';
@@ -304,6 +305,12 @@ const Home = ({
 };
 
 const App = () => {
+  const [tafsirModalOpen, setTafsirModalOpen] = useState(false);
+
+  useEffect(() => {
+    (window as any).dispatchOpenTafsir = () => setTafsirModalOpen(true);
+    return () => { delete (window as any).dispatchOpenTafsir; };
+  }, []);
   const [activeTab, setActiveTab] = useState('home');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -314,14 +321,30 @@ const App = () => {
   const { settings, updateSetting } = useSettings();
 
   useEffect(() => {
-    const checkDownload = () => {
-      const downloaded = localStorage.getItem('isQuranDownloaded');
-      setIsDownloaded(downloaded === 'true');
+    const checkDownload = async () => {
+      const { dbService } = await import('./services/dbService');
+      const count = await dbService.getAllVersesCount();
+      const isFull = localStorage.getItem('isQuranFullyDownloaded') === 'true';
+      
+      if (count >= 6236 && isFull) {
+        setIsDownloaded(true);
+      } else {
+        localStorage.setItem('isQuranFullyDownloaded', 'false');
+        setIsDownloaded(false);
+      }
     };
     checkDownload();
   }, []);
   const isDarkMode = settings.nightMode;
   const toggleDarkMode = () => updateSetting('nightMode', !settings.nightMode);
+  
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   // Bookmarks State
   const [bookmarks, setBookmarks] = useState<string[]>(() => {
@@ -535,6 +558,11 @@ const App = () => {
               onClose={() => setLanguageModalOpen(false)}
               selectedId={selectedTranslationId}
               onSelect={handleTranslationSelect}
+            />
+
+            <TafsirSelector 
+              isOpen={tafsirModalOpen}
+              onClose={() => setTafsirModalOpen(false)}
             />
 
             <GoToPageModal 

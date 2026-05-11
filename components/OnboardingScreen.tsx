@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, CheckCircle, AlertCircle, Loader2, Sparkles, BookOpen } from 'lucide-react';
-import { downloadFullQuranText } from '../services/quranService';
+import { downloadManager } from '../services/downloadManager';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface OnboardingScreenProps {
@@ -10,16 +10,20 @@ interface OnboardingScreenProps {
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   const [step, setStep] = useState<'welcome' | 'downloading' | 'completed'>('welcome');
   const [progress, setProgress] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('Initializing...');
   const [error, setError] = useState<string | null>(null);
 
   const startDownload = async () => {
     setStep('downloading');
     setError(null);
     try {
-      await downloadFullQuranText((p) => setProgress(p));
+      await downloadManager.downloadQuranText((p, msg) => {
+        setProgress(p);
+        setStatusMessage(msg);
+      });
       setStep('completed');
-    } catch (err) {
-      setError('Download failed. Please check your internet connection.');
+    } catch (err: any) {
+      setError(err.message || 'Download failed. Please check your internet connection and try again.');
       setStep('welcome');
     }
   };
@@ -98,13 +102,13 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             </div>
 
             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Downloading Quran</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-8 animate-pulse">
-              Please stay on this screen...
+            <p className="text-slate-500 dark:text-slate-400 mb-8 font-medium">
+              {statusMessage}
             </p>
 
             <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm tracking-widest uppercase">
               <Loader2 className="animate-spin" size={16} />
-              Optimizing Data
+              Please wait...
             </div>
           </motion.div>
         )}

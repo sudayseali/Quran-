@@ -56,9 +56,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
   const audioProgress = (currentTime / duration) * 100 || 0;
   
   const getContextId = () => {
-    if (context.type === 'surah') return context.id || context.data?.id;
+    if (context.type === 'surah') return context.id || (context as any).data?.id;
     if (context.type === 'settings') return undefined;
-    return context.id;
+    if ('id' in context) return (context as any).id;
+    return undefined;
   };
 
   const isSurahPlaying = isPlaying && currentSurah?.id === getContextId();
@@ -583,29 +584,35 @@ export const DetailView: React.FC<DetailViewProps> = ({
                   </button>
 
                   {context.type === 'surah' && (
-                    <button 
-                      onClick={handleDownload}
-                      disabled={downloading || isDownloaded}
-                      className={`flex flex-col items-center justify-center backdrop-blur-md w-14 h-14 rounded-2xl transition-all shadow-lg border relative overflow-hidden ${
-                        isDownloaded 
-                          ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400' 
-                          : 'bg-black/20 border-white/10 text-emerald-100/70 hover:bg-black/30'
-                      }`}
-                      title={isDownloaded ? "Downloaded" : "Download for offline"}
-                    >
-                        {downloading && (
-                          <div className="absolute bottom-0 left-0 h-1 bg-emerald-400/50" style={{ width: `${downloadProgress}%` }} />
-                        )}
-                        {downloading ? (
-                           <div className="flex flex-col items-center justify-center">
-                              <span className="text-[10px] font-bold">{downloadProgress}%</span>
-                           </div>
-                        ) : isDownloaded ? (
-                          <Check size={24} />
-                        ) : (
-                          <Download size={24} />
-                        )}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={handleDownload}
+                        disabled={downloading || isDownloaded}
+                        className={`flex flex-col items-center justify-center backdrop-blur-md w-14 h-14 rounded-2xl transition-all shadow-lg border relative overflow-hidden ${
+                          isDownloaded 
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400' 
+                            : 'bg-black/20 border-white/10 text-emerald-100/70 hover:bg-black/30'
+                        }`}
+                        title={isDownloaded ? "Downloaded" : "Download for offline"}
+                      >
+                          {downloading && (
+                            <div className="absolute bottom-0 left-0 h-1 bg-emerald-400" style={{ width: `${downloadProgress}%` }} />
+                          )}
+                          {downloading ? (
+                             <span className="text-[10px] font-black">{downloadProgress}%</span>
+                          ) : isDownloaded ? (
+                            <Check size={24} />
+                          ) : (
+                            <Download size={24} />
+                          )}
+                      </button>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/70">Audio Status</span>
+                        <span className="text-xs font-bold text-white">
+                          {downloading ? 'Downloading...' : isDownloaded ? 'Offline Ready' : 'Online Only'}
+                        </span>
+                      </div>
+                    </div>
                   )}
                   
                   {/* Tajweed Toggle */}
