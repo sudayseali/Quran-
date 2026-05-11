@@ -1,15 +1,32 @@
-const CACHE_NAME = 'quran-app-v1';
+const CACHE_NAME = 'quran-app-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
+  '/index.css',
   '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force the waiting service worker to become the active service worker.
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME && cacheName !== 'quran-api-cache' && cacheName !== 'quran-assets-cache') {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim(); // Take control of all pages controlled by this SW.
 });
 
 self.addEventListener('fetch', (event) => {
