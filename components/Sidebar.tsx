@@ -71,9 +71,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, o
             <SidebarItem icon={Settings} label="Settings" onClick={() => handleNav({ type: 'settings' })} />
             
             <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-4">Community</h3>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-4">Community & Support</h3>
                 <SidebarItem icon={Share2} label="Share App" onClick={onClose} />
-                <SidebarItem icon={Heart} label="Support Us" onClick={onClose} />
+                <SidebarItem icon={Heart} label="Support WhatsApp: 0657864155" onClick={() => {
+                  window.open('https://api.whatsapp.com/send?phone=252657864155', '_blank');
+                  onClose();
+                }} />
             </div>
           </div>
           
