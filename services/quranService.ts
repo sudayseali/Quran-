@@ -148,6 +148,26 @@ export const fetchChapterAudioUrl = async (recitationId: number, chapterId: numb
   }
 };
 
+export const fetchChapterAudioTimings = async (recitationId: number, chapterId: number): Promise<any[]> => {
+  const cacheKey = `chapter_timings_${recitationId}_${chapterId}`;
+  const cachedData = await getFromCache<any[]>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(`https://api.qurancdn.com/api/qdc/audio/reciters/${recitationId}/audio_files?chapter=${chapterId}&segments=true`);
+    if (!response.ok) throw new Error('Failed to fetch chapter timings');
+    const data = await response.json();
+    const timings = data?.audio_files?.[0]?.verse_timings || [];
+    if (timings.length > 0) {
+      await saveToCache(cacheKey, timings);
+    }
+    return timings;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
+
 export const fetchChapters = async (): Promise<ApiChapterResponse> => {
   const cacheKey = 'chapters_list';
   const cachedData = await getFromCache<ApiChapterResponse>(cacheKey);
@@ -172,7 +192,7 @@ export const fetchVerses = async (chapterId: number, page: number = 1, translati
 
   try {
     const response = await fetch(
-      `${BASE_URL}/verses/by_chapter/${chapterId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+      `${BASE_URL}/verses/by_chapter/${chapterId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed,text_indopak&page=${page}&per_page=${perPage}`
     );
     if (!response.ok) throw new Error('Failed to fetch verses');
     const data = await response.json();
@@ -191,7 +211,7 @@ export const fetchVersesByHizb = async (hizbId: number, page: number = 1, transl
 
   try {
     const response = await fetch(
-      `${BASE_URL}/verses/by_hizb/${hizbId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+      `${BASE_URL}/verses/by_hizb/${hizbId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed,text_indopak&page=${page}&per_page=${perPage}`
     );
     if (!response.ok) throw new Error('Failed to fetch verses by hizb');
     const data = await response.json();
@@ -210,7 +230,7 @@ export const fetchVersesByJuz = async (juzId: number, page: number = 1, translat
 
   try {
     const response = await fetch(
-      `${BASE_URL}/verses/by_juz/${juzId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+      `${BASE_URL}/verses/by_juz/${juzId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed,text_indopak&page=${page}&per_page=${perPage}`
     );
     if (!response.ok) throw new Error('Failed to fetch verses by juz');
     const data = await response.json();
@@ -230,7 +250,7 @@ export const fetchVersesByPage = async (pageId: number, page: number = 1, transl
 
   try {
     const response = await fetch(
-      `${BASE_URL}/verses/by_page/${pageId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed&page=${page}&per_page=${perPage}`
+      `${BASE_URL}/verses/by_page/${pageId}?language=en&words=false&translations=${translationId}&fields=text_uthmani,text_uthmani_tajweed,text_indopak&page=${page}&per_page=${perPage}`
     );
     if (!response.ok) throw new Error('Failed to fetch verses by page');
     const data = await response.json();

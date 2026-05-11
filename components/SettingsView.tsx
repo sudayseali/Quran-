@@ -76,6 +76,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
             previewText="بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"
             fontClass="font-arabic"
           />
+
+          <div className="h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
+
+          <div className="p-3 sm:px-4 flex flex-col gap-2 mb-2">
+            <h4 className="text-[15px] font-semibold text-slate-800 dark:text-slate-200">Arabic Font Style</h4>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-snug mb-2">Dooro nooca farta Quraanka (Uthmani ama Indo-Pak)</p>
+            <select 
+              className="w-full bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-800 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all appearance-none"
+              value={settings.arabicFont}
+              onChange={(e) => updateSetting('arabicFont', e.target.value as any)}
+            >
+              <option value="uthmani">Uthmani (Madinah - Standard)</option>
+              <option value="indopak">Indo-Pak (Aasiya - Majeedi)</option>
+            </select>
+          </div>
           
           <div className="h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
 

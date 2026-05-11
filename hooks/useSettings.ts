@@ -9,6 +9,7 @@ export interface AppSettings {
   ayahBeforeTranslation: boolean;
   selectedReciter: string;
   recitationApiId: number;
+  arabicFont: 'uthmani' | 'indopak';
 }
 
 const defaultSettings: AppSettings = {
@@ -19,7 +20,8 @@ const defaultSettings: AppSettings = {
   translationTextSize: 16,
   ayahBeforeTranslation: true,
   selectedReciter: 'mishari_al-afasy',
-  recitationApiId: 7
+  recitationApiId: 7,
+  arabicFont: 'uthmani'
 };
 
 export const useSettings = () => {

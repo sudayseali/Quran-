@@ -18,6 +18,7 @@ export interface Verse {
   verse_key: string;
   text_uthmani: string;
   text_uthmani_tajweed?: string;
+  text_indopak?: string;
   text_imlaei?: string;
   translations?: Translation[];
   audio?: {

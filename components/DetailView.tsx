@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, MoreHorizontal, Play, Pause, Share2, Bookmark, Search, X, Book, ChevronDown, Check, Loader2, Download } from 'lucide-react';
 import { audioDownloadService } from '../services/audioDownloadService';
 import { NavigationContext, Verse, TafsirInfo, ApiVerseResponse } from '../types';
-import { fetchVerses, fetchVersesByHizb, fetchVersesByJuz, fetchVersesByPage, getAudioUrl, fetchTafsirList, fetchTafsirContent } from '../services/quranService';
+import { fetchVerses, fetchVersesByHizb, fetchVersesByJuz, fetchVersesByPage, getAudioUrl, fetchTafsirList, fetchTafsirContent, fetchChapterAudioTimings } from '../services/quranService';
 import { Loading } from './Loading';
 import { QuickTools } from './QuickTools';
 
@@ -47,6 +47,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
   } = useAudio();
 
   const [verses, setVerses] = useState<Verse[]>([]);
+  const [verseTimings, setVerseTimings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<ApiVerseResponse['pagination'] | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -123,6 +124,28 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
   const versesRef = useRef<Verse[]>([]); // To access latest verses in closures
 
+  const activeVerseKeyRef = useRef<string | null>(null);
+
+  // Sync activeVerseKey with verseTimings
+  useEffect(() => {
+    if (isPlaying && currentSurah?.id === getContextId() && verseTimings.length > 0) {
+      const currentMillis = currentTime * 1000;
+      const timing = verseTimings.find(t => currentMillis >= t.timestamp_from && currentMillis <= t.timestamp_to);
+      if (timing && timing.verse_key !== activeVerseKeyRef.current) {
+        activeVerseKeyRef.current = timing.verse_key;
+        // Scroll to it
+        setTimeout(() => {
+          const el = document.getElementById(`verse-${timing.verse_key}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    } else if (!isPlaying) {
+      activeVerseKeyRef.current = null;
+    }
+  }, [currentTime, isPlaying, currentSurah, verseTimings, context]);
+
   // Track read verses
   const readVersesRef = useRef<Set<string>>(new Set());
 
@@ -164,6 +187,13 @@ export const DetailView: React.FC<DetailViewProps> = ({
           setPagination(data.pagination);
         }
 
+        if (context.type === 'surah' && targetId) {
+          const timings = await fetchChapterAudioTimings(settings.recitationApiId, targetId);
+          setVerseTimings(timings);
+        } else {
+          setVerseTimings([]);
+        }
+
         // Pre-load Tafsir list
         const tafsirs = await fetchTafsirList();
         setTafsirList(tafsirs.tafsirs);
@@ -174,7 +204,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
       }
     };
     loadContent();
-  }, [context, translationId]);
+  }, [context, translationId, settings.recitationApiId]);
 
   // Load More Verses Handler
   const handleLoadMore = async () => {
@@ -394,7 +424,14 @@ export const DetailView: React.FC<DetailViewProps> = ({
            {filteredVerses.map((verse) => {
               const chapterId = verse.verse_key.split(':')[0];
               const verseNum = verse.verse_key.split(':')[1];
-              const isPlayingVerse = false; // We don't have timestamps for verse-by-verse highlighting yet
+              let isPlayingVerse = false;
+              if (currentSurah?.id === getContextId() && isPlaying) {
+                 const currentMillis = currentTime * 1000;
+                 const timing = verseTimings.find(t => t.verse_key === verse.verse_key);
+                 if (timing) {
+                   isPlayingVerse = currentMillis >= timing.timestamp_from && currentMillis <= timing.timestamp_to;
+                 }
+              }
               
               const showHeader = lastChapter && lastChapter !== chapterId;
               lastChapter = chapterId;
@@ -411,12 +448,13 @@ export const DetailView: React.FC<DetailViewProps> = ({
                    )}
                    <span 
                      id={`verse-${verse.verse_key}`}
-                   className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/30 rounded transition-colors px-1"
+                   className={`rounded transition-colors px-1 ${isPlayingVerse ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-100' : 'hover:bg-emerald-50/50 dark:hover:bg-emerald-900/30'}`}
+                   style={{ fontFamily: settings.arabicFont === 'indopak' ? "'Lateef', 'Meiryo', serif" : undefined }}
                  >
                    {showTajweed && verse.text_uthmani_tajweed ? (
                      <span dangerouslySetInnerHTML={{ __html: verse.text_uthmani_tajweed }} />
                    ) : (
-                     verse.text_uthmani
+                     settings.arabicFont === 'indopak' ? (verse.text_indopak || verse.text_uthmani) : verse.text_uthmani
                    )}
                  </span>
                  {/* Verse Marker */}
@@ -610,9 +648,28 @@ export const DetailView: React.FC<DetailViewProps> = ({
                ) : (
                  // List View
                  filteredVerses.map((verse) => {
-                  const isCurrent = currentSurah?.id === getContextId() && isPlaying; // Approximate for now
+                  let isCurrent = false;
+                  if (currentSurah?.id === getContextId() && isPlaying) {
+                     const currentMillis = currentTime * 1000;
+                     const timing = verseTimings.find(t => t.verse_key === verse.verse_key);
+                     if (timing) {
+                       isCurrent = currentMillis >= timing.timestamp_from && currentMillis <= timing.timestamp_to;
+                     } else if (verseTimings.length === 0) {
+                       isCurrent = true; // Fallback to highlighting all if no timings available
+                     }
+                  }
+                  
                   const isBookmarked = bookmarks.includes(verse.verse_key);
                   
+                  let verseProgress = audioProgress;
+                  if (isCurrent && verseTimings.length > 0) {
+                     const timing = verseTimings.find(t => t.verse_key === verse.verse_key);
+                     if (timing) {
+                       const currentMillis = currentTime * 1000;
+                       verseProgress = Math.min(100, Math.max(0, ((currentMillis - timing.timestamp_from) / (timing.timestamp_to - timing.timestamp_from)) * 100));
+                     }
+                  }
+
                   return (
                     <div 
                       key={verse.id} 
@@ -626,7 +683,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         <div className="absolute bottom-0 left-0 h-1 bg-emerald-100 dark:bg-emerald-900/50 w-full z-10">
                           <div 
                             className="h-full bg-emerald-600 transition-all duration-100 ease-linear"
-                            style={{ width: `${audioProgress}%` }}
+                            style={{ width: `${verseProgress}%` }}
                           />
                         </div>
                       )}
@@ -700,14 +757,14 @@ export const DetailView: React.FC<DetailViewProps> = ({
                           }
                         }}
                         className={`text-right font-arabic text-slate-800 dark:text-slate-200 leading-[2.6] mb-8 transition-all duration-300 ${isHifdhMode && !revealedVerses.has(verse.verse_key) ? 'filter blur-[8px] opacity-40 cursor-pointer select-none hover:opacity-60' : ''}`}
-                        style={{ fontSize: `${fontSize}px` }}
+                        style={{ fontSize: `${fontSize}px`, fontFamily: settings.arabicFont === 'indopak' ? "'Lateef', 'Meiryo', serif" : undefined }}
                       >
                         {showTajweed && verse.text_uthmani_tajweed ? (
                           <span dangerouslySetInnerHTML={{ __html: verse.text_uthmani_tajweed }} />
                         ) : searchQuery ? (
-                          highlightText(verse.text_uthmani, searchQuery)
+                          highlightText(settings.arabicFont === 'indopak' ? (verse.text_indopak || verse.text_uthmani) : verse.text_uthmani, searchQuery)
                         ) : (
-                          verse.text_uthmani
+                          settings.arabicFont === 'indopak' ? (verse.text_indopak || verse.text_uthmani) : verse.text_uthmani
                         )}
                       </p>
 
