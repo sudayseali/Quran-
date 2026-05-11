@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, CheckCircle, AlertCircle, Loader2, Sparkles, BookOpen } from 'lucide-react';
 import { downloadManager } from '../services/downloadManager';
 import { motion, AnimatePresence } from 'motion/react';
+import { Logo } from './Logo';
 
 interface OnboardingScreenProps {
   onComplete: () => void;
@@ -39,8 +40,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             exit={{ opacity: 0, y: -20 }}
             className="max-w-sm w-full"
           >
-            <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-emerald-500/10">
-              <BookOpen size={48} className="text-emerald-600 dark:text-emerald-400" />
+            <div className="flex justify-center mb-10">
+              <Logo size={120} />
             </div>
             
             <h1 className="text-3xl font-black text-slate-800 dark:text-white mb-4 tracking-tight">

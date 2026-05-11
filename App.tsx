@@ -28,6 +28,7 @@ import { GlobalSearch } from './components/GlobalSearch';
 import { useSettings } from './hooks/useSettings';
 import { TasbihCounter } from './components/TasbihCounter';
 import { PrayerTimes } from './components/PrayerTimes';
+import { Logo } from './components/Logo';
 import { MoreVertical, HelpCircle, Info, ExternalLink, Hash, Book, Compass, Clock, Activity } from 'lucide-react';
 
 // Main Home Component
@@ -101,11 +102,7 @@ const Home = ({
                   <Menu size={24} />
               </button>
               <div className="flex items-center gap-2">
-                <div className="flex -space-x-1" id="animated-icons-container">
-                  <div className="bg-emerald-600 p-1.5 rounded-lg shadow-sm z-10 flex items-center justify-center">
-                    <Book size={16} className="text-white" />
-                  </div>
-                </div>
+                <Logo size={32} />
                 <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-emerald-600 dark:from-emerald-400 dark:to-emerald-200 bg-clip-text text-transparent tracking-tight ml-1">
                   Al Quran Pro
                 </h1>

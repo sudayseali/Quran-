@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Home, BookOpen, Settings, Globe, Share2, Heart, Compass, Clock, Calendar, Moon, Sun, Download, Search, HelpCircle, Info, ExternalLink } from 'lucide-react';
 import { NavigationContext } from '../types';
+import { Logo } from './Logo';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -37,9 +38,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, o
         <div className="p-6 h-full flex flex-col">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              Al Quran <span className="text-xs bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">Pro</span>
-            </h2>
+            <div className="flex items-center gap-3">
+              <Logo size={40} />
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                Al Quran <span className="text-xs bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">Pro</span>
+              </h2>
+            </div>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
               <X size={20} />
             </button>
