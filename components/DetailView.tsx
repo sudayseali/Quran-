@@ -67,6 +67,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
   const [readingProgress, setReadingProgress] = useState(0);
 
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloaded, setIsDownloaded] = useState(false);
 
   useEffect(() => {
@@ -84,13 +85,15 @@ export const DetailView: React.FC<DetailViewProps> = ({
     const id = getContextId();
     if (context.type === 'surah' && id) {
       setDownloading(true);
+      setDownloadProgress(0);
       try {
-        await audioDownloadService.downloadSurah(id, 'mishari_al-afasy');
+        await audioDownloadService.downloadSurah(id, 'mishari_al-afasy', (p) => setDownloadProgress(p));
         setIsDownloaded(true);
       } catch (err) {
         console.error('Download failed', err);
       } finally {
         setDownloading(false);
+        setDownloadProgress(0);
       }
     }
   };
@@ -583,15 +586,20 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     <button 
                       onClick={handleDownload}
                       disabled={downloading || isDownloaded}
-                      className={`flex items-center justify-center backdrop-blur-md w-14 h-14 rounded-2xl transition-all shadow-lg border ${
+                      className={`flex flex-col items-center justify-center backdrop-blur-md w-14 h-14 rounded-2xl transition-all shadow-lg border relative overflow-hidden ${
                         isDownloaded 
                           ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400' 
                           : 'bg-black/20 border-white/10 text-emerald-100/70 hover:bg-black/30'
                       }`}
                       title={isDownloaded ? "Downloaded" : "Download for offline"}
                     >
+                        {downloading && (
+                          <div className="absolute bottom-0 left-0 h-1 bg-emerald-400/50" style={{ width: `${downloadProgress}%` }} />
+                        )}
                         {downloading ? (
-                          <Loader2 size={24} className="animate-spin" />
+                           <div className="flex flex-col items-center justify-center">
+                              <span className="text-[10px] font-bold">{downloadProgress}%</span>
+                           </div>
                         ) : isDownloaded ? (
                           <Check size={24} />
                         ) : (

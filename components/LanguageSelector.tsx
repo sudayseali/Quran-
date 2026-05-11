@@ -62,30 +62,30 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
       
       {/* Modal */}
-      <div className="bg-white w-full sm:max-w-lg h-[90vh] sm:h-[80vh] rounded-t-3xl sm:rounded-3xl shadow-2xl z-10 flex flex-col animate-slide-up relative">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-3xl">
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg h-[90vh] sm:h-[80vh] rounded-t-3xl sm:rounded-3xl shadow-2xl z-10 flex flex-col animate-slide-up relative">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 rounded-t-3xl">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+             <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <Globe size={20} />
              </div>
              <div>
-                <h3 className="font-bold text-slate-800 text-lg">Select Language</h3>
-                <p className="text-xs text-slate-500">Choose translation language</p>
+                <h3 className="font-bold text-slate-800 dark:text-emerald-50 text-lg">Select Language</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Choose translation language</p>
              </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors">
+          <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
             <X size={20} />
           </button>
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-slate-50">
+        <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900">
            <div className="relative">
               <Search className="absolute left-4 top-3.5 text-slate-400" size={18} />
               <input 
                  type="text" 
                  placeholder="Search language or author..."
-                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                 className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-11 pr-4 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-slate-400"
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -93,14 +93,14 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-slate-900 rounded-b-3xl">
           {loading ? (
              <Loading />
           ) : (
              <div className="space-y-6">
                {sortedLanguages.map(lang => (
                  <div key={lang}>
-                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2 sticky top-0 bg-white py-1">{lang}</h4>
+                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2 sticky top-0 bg-white dark:bg-slate-900 py-1 z-10">{lang}</h4>
                    <div className="grid grid-cols-1 gap-1">
                      {groupedTranslations[lang].map(t => (
                        <button
@@ -109,17 +109,24 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                            onSelect(t.id, t.name);
                            onClose();
                          }}
-                         className={`flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all ${selectedId === t.id ? 'bg-emerald-50 border border-emerald-100' : 'hover:bg-slate-50 border border-transparent'}`}
+                         className={`flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all ${selectedId === t.id ? 'bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent'}`}
                        >
                          <div>
-                            <p className={`font-medium text-sm ${selectedId === t.id ? 'text-emerald-800' : 'text-slate-700'}`}>{t.name}</p>
+                            <p className={`font-medium text-sm ${selectedId === t.id ? 'text-emerald-800 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'}`}>{t.name}</p>
                             <p className="text-xs text-slate-400 mt-0.5">{t.author_name}</p>
                          </div>
-                         {selectedId === t.id && (
-                           <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white">
-                             <Check size={14} strokeWidth={3} />
-                           </div>
-                         )}
+                         <div className="flex items-center gap-3">
+                           {selectedId !== t.id && (
+                             <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 transition-colors" title="Download">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                             </div>
+                           )}
+                           {selectedId === t.id && (
+                             <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-sm shadow-emerald-500/20">
+                               <Check size={14} strokeWidth={3} />
+                             </div>
+                           )}
+                         </div>
                        </button>
                      ))}
                    </div>

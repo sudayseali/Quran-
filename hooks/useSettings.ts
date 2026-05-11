@@ -10,6 +10,8 @@ export interface AppSettings {
   selectedReciter: string;
   recitationApiId: number;
   arabicFont: 'uthmani' | 'indopak';
+  translationId: string;
+  translationName: string;
 }
 
 const defaultSettings: AppSettings = {
@@ -21,7 +23,9 @@ const defaultSettings: AppSettings = {
   ayahBeforeTranslation: true,
   selectedReciter: 'mishari_al-afasy',
   recitationApiId: 7,
-  arabicFont: 'uthmani'
+  arabicFont: 'uthmani',
+  translationId: '131',
+  translationName: 'Clear Quran (En)'
 };
 
 export const useSettings = () => {

@@ -117,7 +117,7 @@ export const AyahImageShare: React.FC<AyahImageShareProps> = ({ verse, translati
             {/* The actual card that gets converted to image */}
             <div 
               ref={cardRef}
-              className={`bg-gradient-to-br ${activeTheme.gradient} p-8 rounded-2xl ${activeTheme.isLight ? 'text-slate-800 border p-7 border-slate-200' : 'text-white'} shadow-xl relative w-[340px] overflow-hidden`}
+              className={`bg-gradient-to-br ${activeTheme.gradient} p-8 rounded-2xl ${activeTheme.isLight ? 'text-slate-800 border p-7 border-slate-200' : 'text-white'} shadow-xl relative w-[340px] aspect-[4/5] flex flex-col justify-center overflow-hidden`}
             >
               {/* Decorative Background Pattern */}
               <div className={`absolute inset-0 ${activeTheme.isLight ? 'opacity-[0.03]' : 'opacity-10'} pointer-events-none`}
@@ -133,11 +133,11 @@ export const AyahImageShare: React.FC<AyahImageShareProps> = ({ verse, translati
                    {verse.text_uthmani}
                  </p>
 
-                 <p className={`text-sm leading-relaxed text-center mb-6 font-medium ${activeTheme.isLight ? 'text-slate-600' : 'text-white/90'}`}>
+                 <p className={`text-sm leading-relaxed text-center mb-6 font-medium ${activeTheme.isLight ? 'text-slate-600' : 'text-white/90'} line-clamp-4`}>
                    "{translation}"
                  </p>
 
-                 <div className={`flex items-center justify-center gap-2 text-[10px] font-bold tracking-wider ${activeTheme.accent} border-t ${activeTheme.isLight ? 'border-slate-200' : 'border-white/20'} pt-4 px-4 w-full`}>
+                 <div className={`mt-auto flex items-center justify-center gap-2 text-[10px] font-bold tracking-wider ${activeTheme.accent} border-t ${activeTheme.isLight ? 'border-slate-200' : 'border-white/20'} pt-4 px-4 w-full`}>
                    <span>{contextName}</span>
                    <span className={`w-1 h-1 rounded-full ${activeTheme.isLight ? 'bg-slate-300' : 'bg-white/50'}`}></span>
                    <span>Ayah {verse.verse_key.split(':')[1]}</span>

@@ -4,9 +4,10 @@ import { useSettings } from '../hooks/useSettings';
 
 interface SettingsViewProps {
   onBack: () => void;
+  onOpenLanguage?: () => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onOpenLanguage }) => {
   const { settings, updateSetting } = useSettings();
 
   return (
@@ -39,6 +40,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
 
         {/* Display Settings */}
         <SettingsCard icon={Layout} title="Display & Interface">
+          {onOpenLanguage && (
+            <>
+              <div className="p-3 sm:px-4 flex flex-col gap-2">
+                <h4 className="text-[15px] font-semibold text-slate-800 dark:text-slate-200">Current Translation</h4>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-1">Set your preferred translation / Select Language to download.</p>
+                <button 
+                  onClick={onOpenLanguage}
+                  className="w-full flex justify-between items-center bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-800 dark:text-white font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <span className="truncate pr-4">{settings.translationName || 'Select Translation'}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 text-sm font-bold whitespace-nowrap">Change</span>
+                </button>
+              </div>
+              <div className="h-px bg-slate-100 dark:bg-slate-800 my-2"></div>
+            </>
+          )}
+
           <ToggleItem 
             title="Arabic Interface (الوضع العربي)" 
             subtitle="Faa'iidada: Waxaad ku dhex-dheelaneysaa app-ka iyadoo wajigiisa hore uu Af-Carabi yahay, taasoo ku fiican dadka fahmaya luuqada." 
@@ -145,6 +163,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
               <option value={9}>Minshawi (Murattal)</option>
               <option value={4}>Mahmoud Khalil Al-Husary</option>
             </select>
+          </div>
+        </SettingsCard>
+
+        {/* Support & Contact */}
+        <SettingsCard icon={BookOpen} title="Support & Contact">
+          <div className="p-3 sm:px-4 flex flex-col gap-2">
+             <h4 className="text-[15px] font-semibold text-slate-800 dark:text-slate-200">Caawin (Support)</h4>
+             <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-2">
+               Haddii aad qabto su'aal, cillad, ama talo, fadlan nagala soo xiriir WhatsApp. <br/>
+               <span className="font-bold text-red-400">Hubi: Text kaliya soo dir, fadlan ha soo wicin (No Voice/Video Calls)</span>
+             </p>
+             <a 
+               href="https://wa.me/252657864155?text=Asc%20walal%20waxaan%20rabaa%20caawin%20ku%20saabsan%20Al%20Quran%20Pro%20app..." 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="mt-2 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-colors"
+             >
+                <Globe size={18} />
+                Nagala Soo Xiriir WhatsApp
+             </a>
           </div>
         </SettingsCard>
 

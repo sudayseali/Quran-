@@ -39,9 +39,36 @@ class AudioDownloadService {
       const response = await fetch(url);
       if (!response.ok) throw new Error('Download failed');
       
-      const cacheKey = new URL(`/cache/audio/${fileName}`, location.origin).toString();
-      await cache.put(cacheKey, response.clone());
-      return cacheKey;
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+      let loaded = 0;
+
+      if (total && response.body && onProgress) {
+        const reader = response.body.getReader();
+        const stream = new ReadableStream({
+          async start(controller) {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                break;
+              }
+              loaded += value.length;
+              onProgress(Math.round((loaded / total) * 100));
+              controller.enqueue(value);
+            }
+            controller.close();
+            reader.releaseLock();
+          }
+        });
+        const newResponse = new Response(stream, { headers: response.headers });
+        const cacheKey = new URL(`/cache/audio/${fileName}`, location.origin).toString();
+        await cache.put(cacheKey, newResponse);
+        return cacheKey;
+      } else {
+        const cacheKey = new URL(`/cache/audio/${fileName}`, location.origin).toString();
+        await cache.put(cacheKey, response.clone());
+        return cacheKey;
+      }
     }
 
     // Capacitor Native
