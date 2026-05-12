@@ -8,6 +8,7 @@ export interface DownloadMetadata {
   id: string;
   type: 'quran' | 'tafsir' | 'audio';
   status: 'pending' | 'downloading' | 'completed' | 'failed';
+  name?: string;
   progress: number;
   totalChunks?: number;
   completedChunks?: number;

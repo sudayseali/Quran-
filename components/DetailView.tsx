@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, MoreHorizontal, Play, Pause, Share2, Bookmark, Search, X, Book, ChevronDown, Check, Loader2, Download } from 'lucide-react';
 import { audioDownloadService } from '../services/audioDownloadService';
+import { downloadManager } from '../services/downloadManager';
 import { NavigationContext, Verse, TafsirInfo, ApiVerseResponse } from '../types';
 import { fetchVerses, fetchVersesByHizb, fetchVersesByJuz, fetchVersesByPage, getAudioUrl, fetchTafsirList, fetchTafsirContent, fetchChapterAudioTimings } from '../services/quranService';
 import { Loading } from './Loading';
@@ -88,7 +89,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
       setDownloading(true);
       setDownloadProgress(0);
       try {
-        await audioDownloadService.downloadSurah(id, 'mishari_al-afasy', (p) => setDownloadProgress(p));
+        await downloadManager.downloadAudioSurah(id, 'mishari_al-afasy', (p) => setDownloadProgress(p));
         setIsDownloaded(true);
       } catch (err) {
         console.error('Download failed', err);
