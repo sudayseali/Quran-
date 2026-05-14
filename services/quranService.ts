@@ -56,6 +56,7 @@ export const sanitizeHtml = (html: string): string => {
 const API_SOURCES = [
   { base: 'https://api.quran.com/api/v4', type: 'quran.com' },
   { base: 'https://api.alquran.cloud/v1', type: 'alquran.cloud' },
+  { base: 'https://raw.githubusercontent.com/semarketir/quranjson/master/source', type: 'github.quranjson' }
 ];
 
 async function fetchWithFallback<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -65,7 +66,7 @@ async function fetchWithFallback<T>(path: string, options: RequestInit = {}): Pr
     try {
       const url = source.type === 'quran.com' 
         ? `${source.base}${path}`
-        : transformRequest(source.base, path);
+        : transformRequest(source.base, path, source.type);
       
       if (!url) continue; // Skip if transformation was impossible
       
@@ -93,47 +94,98 @@ async function fetchWithFallback<T>(path: string, options: RequestInit = {}): Pr
   throw lastError || new Error('All API sources failed');
 }
 
-// Simple path mapping for alquran.cloud
-function transformRequest(base: string, path: string): string | null {
-  if (path.includes('/chapters')) return `${base}/surah`;
-  if (path.includes('/verses/by_chapter/')) {
-    const chapterId = path.split('/').pop()?.split('?')[0];
-    return `${base}/surah/${chapterId}/editions/quran-uthmani,en.sahih,en.transliteration`;
+// Simple path mapping for alquran.cloud and github.quranjson
+function transformRequest(base: string, path: string, type: string): string | null {
+  if (type === 'github.quranjson') {
+     if (path.includes('/verses/by_chapter/')) {
+       let chapterId = path.split('/').pop()?.split('?')[0] || '';
+       if (chapterId.includes('&')) chapterId = chapterId.split('&')[0];
+       return `${base}/surah/surah_${chapterId}.json`;
+     }
+     return null;
   }
-  // alquran.cloud doesn't support the full API scope of quran.com easily without complex mapping.
-  // For critical fallbacks (chapters/verses), it works.
-  return null; 
+
+  if (type === 'alquran.cloud') {
+    if (path.includes('/chapters')) return `${base}/surah`;
+    if (path.includes('/verses/by_chapter/')) {
+      const chapterId = path.split('/').pop()?.split('?')[0];
+      return `${base}/surah/${chapterId}/editions/quran-uthmani,en.sahih,en.transliteration`;
+    }
+    return null; 
+  }
+  return null;
 }
 
 function normalizeResponse(type: string, path: string, data: any): any {
   if (type === 'quran.com') return data;
   
-  // Normalize alquran.cloud to quran.com format
-  if (path.includes('/chapters')) {
-    return {
-      chapters: data.data.map((s: any) => ({
-        id: s.number,
-        name_simple: s.englishName,
-        name_arabic: s.name,
-        verses_count: s.numberOfAyahs,
-        revelation_place: s.revelationType.toLowerCase()
-      }))
-    };
+  if (type === 'github.quranjson') {
+    if (path.includes('/verses/by_chapter/')) {
+      const chapterId = parseInt(data.index, 10);
+      const verses: any[] = [];
+      Object.keys(data.verse).forEach((key) => {
+        const verseNumber = parseInt(key.replace('verse_', ''), 10);
+        let juz_number = 1;
+        
+        // Find juz
+        if (data.juz && Array.isArray(data.juz)) {
+            data.juz.forEach((j: any) => {
+               const start = parseInt(j.verse.start.replace('verse_',''));
+               const end = parseInt(j.verse.end.replace('verse_',''));
+               if (verseNumber >= start && verseNumber <= end) juz_number = parseInt(j.index, 10);
+            });
+        }
+
+        verses.push({
+          id: parseInt(`${chapterId}${verseNumber.toString().padStart(3, '0')}`),
+          verse_key: `${chapterId}:${verseNumber}`,
+          text_uthmani: data.verse[key],
+          chapter_id: chapterId,
+          juz_number: juz_number,
+          hizb_number: juz_number * 2, // approximation
+          page_number: 1, // fallback
+          translations: [{ text: "", resource_id: 131 }] // Empty translation as fallback
+        });
+      });
+      return {
+        verses,
+        pagination: { total_pages: 1, current_page: 1 }
+      };
+    }
   }
-  
-  if (path.includes('/verses/by_chapter/')) {
-    // data.data is an array of editions
-    const uthmani = data.data[0].ayahs;
-    const translation = data.data[1].ayahs;
-    return {
-      verses: uthmani.map((a: any, idx: number) => ({
-        id: a.number,
-        verse_key: `${a.surah.number}:${a.numberInSurah}`,
-        text_uthmani: a.text,
-        translations: [{ text: translation[idx].text, resource_id: 131 }]
-      })),
-      pagination: { total_pages: 1, current_page: 1 } // alquran.cloud returns full surah
-    };
+
+  // Normalize alquran.cloud to quran.com format
+  if (type === 'alquran.cloud') {
+    if (path.includes('/chapters')) {
+      return {
+        chapters: data.data.map((s: any) => ({
+          id: s.number,
+          name_simple: s.englishName,
+          name_arabic: s.name,
+          verses_count: s.numberOfAyahs,
+          revelation_place: s.revelationType.toLowerCase()
+        }))
+      };
+    }
+    
+    if (path.includes('/verses/by_chapter/')) {
+      // data.data is an array of editions
+      const uthmani = data.data[0].ayahs;
+      const translation = data.data[1].ayahs;
+      return {
+        verses: uthmani.map((a: any, idx: number) => ({
+          id: a.number,
+          verse_key: `${a.surah.number}:${a.numberInSurah}`,
+          text_uthmani: a.text,
+          chapter_id: a.surah.number,
+          juz_number: a.juz,
+          hizb_number: a.hizbQuarter ? Math.ceil(a.hizbQuarter / 4) : Math.ceil(a.juz * 2),
+          page_number: a.page,
+          translations: [{ text: translation[idx].text, resource_id: 131 }]
+        })),
+        pagination: { total_pages: 1, current_page: 1 } // alquran.cloud returns full surah
+      };
+    }
   }
   
   return data;
